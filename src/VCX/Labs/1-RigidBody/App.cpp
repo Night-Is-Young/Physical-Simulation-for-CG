@@ -1,11 +1,10 @@
 #include "Assets/bundled.h"
-#include "Labs/0-GettingStarted/App.h"
+#include "Labs/1-RigidBody/App.h"
 
-namespace VCX::Labs::GettingStarted {
+namespace VCX::Labs::RigidBody {
 
     App::App():
-        _ui(Labs::Common::UIOptions {}),
-        _casefluid({ Assets::ExampleScene::Fluid }) {
+        _ui(Labs::Common::UIOptions {}) {
     }
 
     void App::OnFrame() {

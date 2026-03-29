@@ -1,9 +1,9 @@
-#include "Labs/0-GettingStarted/CaseBox.h"
+#include "Labs/1-RigidBody/CaseSingleBox.h"
 #include "Labs/Common/ImGuiHelper.h"
 
-namespace VCX::Labs::GettingStarted {
+namespace VCX::Labs::RigidBody {
 
-    CaseBox::CaseBox():
+    CaseSingleBox::CaseSingleBox():
         _program(
             Engine::GL::UniqueProgram({ Engine::GL::SharedShader("assets/shaders/flat.vert"),
                                         Engine::GL::SharedShader("assets/shaders/flat.frag") })),
@@ -25,7 +25,7 @@ namespace VCX::Labs::GettingStarted {
         _cameraManager.Save(_camera);
     }
 
-    void CaseBox::OnSetupPropsUI() {
+    void CaseSingleBox::OnSetupPropsUI() {
         if (ImGui::CollapsingHeader("Appearance", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::ColorEdit3("Box Color", glm::value_ptr(_boxColor));
             ImGui::SliderFloat("x", &_dim[0], 0.5, 4);
@@ -39,7 +39,7 @@ namespace VCX::Labs::GettingStarted {
         ImGui::Spacing();
     }
 
-    Common::CaseRenderResult CaseBox::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
+    Common::CaseRenderResult CaseSingleBox::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
         // apply mouse control first
         OnProcessMouseControl(_cameraManager.getMouseMove());
 
@@ -91,11 +91,11 @@ namespace VCX::Labs::GettingStarted {
         };
     }
 
-    void CaseBox::OnProcessInput(ImVec2 const & pos) {
+    void CaseSingleBox::OnProcessInput(ImVec2 const & pos) {
         _cameraManager.ProcessInput(_camera, pos);
     }
 
-    void CaseBox::OnProcessMouseControl(glm::vec3 mouseDelta) {
+    void CaseSingleBox::OnProcessMouseControl(glm::vec3 mouseDelta) {
         float movingScale = 0.1f;
         _center += mouseDelta * movingScale;
     }

@@ -7,11 +7,11 @@
 #include "Labs/Common/ImageRGB.h"
 #include "Labs/Common/OrbitCameraManager.h"
 
-namespace VCX::Labs::GettingStarted {
+namespace VCX::Labs::RigidBody {
 
-    class CaseBox : public Common::ICase {
+    class CaseSingleBox : public Common::ICase {
     public:
-        CaseBox();
+        CaseSingleBox();
 
         virtual std::string_view const GetName() override { return "Draw a 3D Box"; }
 
@@ -32,4 +32,4 @@ namespace VCX::Labs::GettingStarted {
         glm::vec3                           _dim { 1.f, 2.f, 3.f };
         glm::vec3                           _boxColor { 121.0f / 255, 207.0f / 255, 171.0f / 255 };
     };
-} // namespace VCX::Labs::GettingStarted
+} // namespace VCX::Labs::RigidBody
