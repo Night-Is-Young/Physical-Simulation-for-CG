@@ -41,7 +41,11 @@ namespace VCX::Labs::RigidBody {
             ImGui::InputFloat("pos_y", &_center[1]);
             ImGui::InputFloat("pos_z", &_center[2]);
 
-            ImGui::SliderFloat3("Velocity", glm::value_ptr(_velocity), -5.0f, 5.0f);
+        }
+        if (ImGui::CollapsingHeader("Velocity", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::SliderFloat("velocity_x", &_velocity.x, -5.f, 5.f);
+            ImGui::SliderFloat("velocity_y", &_velocity.y, -5.f, 5.f);
+            ImGui::SliderFloat("velocity_z", &_velocity.z, -5.f, 5.f);
         }
         if (ImGui::CollapsingHeader("Force", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::SliderFloat("force_pos_x", &_forcePos.x, 0, _dim[0]);
@@ -52,7 +56,7 @@ namespace VCX::Labs::RigidBody {
             ImGui::SliderFloat("force_y", &_force.y, -5.f, 5.f);
             ImGui::SliderFloat("force_z", &_force.z, -5.f, 5.f);
         }
-        if (ImGui::CollapsingHeader("Rotate", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (ImGui::CollapsingHeader("Rotation", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::SliderFloat("omega_x", &_omega.x, -5.f, 5.f);
             ImGui::SliderFloat("omega_y", &_omega.z, -5.f, 5.f);
             ImGui::SliderFloat("omega_y", &_omega.z, -5.f, 5.f);
@@ -67,10 +71,10 @@ namespace VCX::Labs::RigidBody {
         _center += _velocity * dt;
         // Rotational Motion
         glm::mat3 R           = glm::mat3_cast(_q);
-        glm::vec3 torque      = .0f * glm::cross(R * (_forcePos - _dim * .5f), _force) / _mass;
+        glm::vec3 torque      = glm::cross(R * (_forcePos - _dim * .5f), _force);
         glm::mat3 I_world     = R * _I * glm::transpose(R);
         glm::mat3 I_world_inv = glm::inverse(I_world);
-        _omega += I_world_inv * (torque - glm::cross(_omega, I_world * _omega));
+        _omega += dt * I_world_inv * (torque - glm::cross(_omega, I_world * _omega));
         glm::quat rotQuat = glm::exp(0.5f * dt * glm::quat(0.f, _omega));
         _q                = glm::normalize(rotQuat * _q);
     }
@@ -132,22 +136,6 @@ namespace VCX::Labs::RigidBody {
 
     void CaseSingleBox::OnProcessInput(ImVec2 const & pos) {
         _cameraManager.ProcessInput(_camera, pos);
-
-        //ImGuiIO & io = ImGui::GetIO();
-        //glm::vec3 forceDirection(0.f);
-        //if (io.KeysDown[ImGuiKey_W]) forceDirection.z -= 1.f;
-        //if (io.KeysDown[ImGuiKey_S]) forceDirection.z += 1.f;
-        //if (io.KeysDown[ImGuiKey_A]) forceDirection.x -= 1.f;
-        //if (io.KeysDown[ImGuiKey_D]) forceDirection.x += 1.f;
-        //if (io.KeysDown[ImGuiKey_Q]) forceDirection.y += 1.f;
-        //if (io.KeysDown[ImGuiKey_E]) forceDirection.y -= 1.f;
-
-        //if (glm::length(forceDirection) > 0.f) {
-        //    glm::mat3 viewRot = glm::mat3(_camera.GetViewMatrix());
-        //    _force = viewRot * glm::normalize(forceDirection) * 0.001f;
-        //} else {
-        //    _force = glm::vec3(0.f);
-        //}
     }
 
     void CaseSingleBox::OnProcessMouseControl(glm::vec3 mouseDelta) {
@@ -155,4 +143,4 @@ namespace VCX::Labs::RigidBody {
         _center += mouseDelta * movingScale;
     }
 
-} // namespace VCX::Labs::GettingStarted
+} // namespace VCX::Labs::RigidBody
