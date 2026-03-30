@@ -1,89 +1,125 @@
-#include "Labs/1-RigidBody/CaseSingleBox.h"
+#include "Labs/1-RigidBody/CaseTwoBox.h"
 #include "Labs/Common/ImGuiHelper.h"
 #include "Engine/app.h"
+#include <fcl/narrowphase/collision.h>
 
 namespace VCX::Labs::RigidBody {
 
-    CaseSingleBox::CaseSingleBox():
+    CaseTwoBox::CaseTwoBox():
         _program(
             Engine::GL::UniqueProgram({ Engine::GL::SharedShader("assets/shaders/flat.vert"),
                                         Engine::GL::SharedShader("assets/shaders/flat.frag") })),
-        _boxItem(Engine::GL::VertexLayout().Add<glm::vec3>("position", Engine::GL::DrawFrequency::Stream, 0), Engine::GL::PrimitiveType::Triangles),
-        _lineItem(Engine::GL::VertexLayout().Add<glm::vec3>("position", Engine::GL::DrawFrequency::Stream, 0), Engine::GL::PrimitiveType::Lines) {
-        _I = _mass / 12.f * glm::mat3(
-            _dim.y * _dim.y + _dim.z * _dim.z, 0.f, 0.f,
-            0.f, _dim.x * _dim.x + _dim.z * _dim.z, 0.f,
-            0.f, 0.f, _dim.x * _dim.x + _dim.y * _dim.y);
-        //     3-----2
-        //    /|    /|
-        //   0 --- 1 |
-        //   | 7 - | 6
-        //   |/    |/
-        //   4 --- 5
-        const std::vector<std::uint32_t> line_index = { 0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7 }; // line index
-        _lineItem.UpdateElementBuffer(line_index);
-
-        // const std::vector<std::uint32_t> tri_index = { 0, 1, 2, 0, 2, 3, 1, 4, 0, 1, 4, 5, 1, 6, 5, 1, 2, 6, 2, 3, 7, 2, 6, 7, 0, 3, 7, 0, 4, 7, 4, 5, 6, 4, 6, 7 };
-        const std::vector<std::uint32_t> tri_index = { 0, 1, 2, 0, 2, 3, 1, 0, 4, 1, 4, 5, 1, 5, 6, 1, 6, 2, 2, 7, 3, 2, 6, 7, 0, 3, 7, 0, 7, 4, 4, 6, 5, 4, 7, 6 };
-        _boxItem.UpdateElementBuffer(tri_index);
+        box1(1, 100.f, glm::vec3(1.f, 2.f, 3.f), glm::vec3(-5.f, 0.0f, 0.0f)),
+        box2(2, 100.f, glm::vec3(1.f, 2.f, 3.f), glm::vec3(5.f, 0.0f, 0.0f)) {
         _cameraManager.AutoRotate = false;
         _cameraManager.Save(_camera);
     }
 
-    void CaseSingleBox::OnSetupPropsUI() {
-        if (ImGui::CollapsingHeader("Appearance", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::ColorEdit3("Box Color", glm::value_ptr(_boxColor));
-            ImGui::SliderFloat("x", &_dim[0], 0.5, 4);
-            ImGui::SliderFloat("y", &_dim[1], 0.5, 4);
-            ImGui::SliderFloat("z", &_dim[2], 0.5, 4);
-
-            ImGui::InputFloat("pos_x", &_center[0]);
-            ImGui::InputFloat("pos_y", &_center[1]);
-            ImGui::InputFloat("pos_z", &_center[2]);
-
+    void CaseTwoBox::OnSetupPropsUI() {
+        if (ImGui::CollapsingHeader("Box1", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Text("Position_1: (%.2f, %.2f, %.2f)", box1._pos.x, box1._pos.y, box1._pos.z);
+            ImGui::Text("Orientation_1: (%.2f, %.2f, %.2f, %.2f)", box1._q.w, box1._q.x, box1._q.y, box1._q.z);
+            ImGui::SliderFloat3("Velocity_1", glm::value_ptr(box1._velocity), -5.0f, 5.0f);
+            ImGui::SliderFloat3("Omega_1", glm::value_ptr(box1._omega), -5.0f, 5.0f);
         }
-        if (ImGui::CollapsingHeader("Velocity", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::SliderFloat("velocity_x", &_velocity.x, -5.f, 5.f);
-            ImGui::SliderFloat("velocity_y", &_velocity.y, -5.f, 5.f);
-            ImGui::SliderFloat("velocity_z", &_velocity.z, -5.f, 5.f);
+        if (ImGui::CollapsingHeader("Box2", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Text("Position_2: (%.2f, %.2f, %.2f)", box2._pos.x, box2._pos.y, box2._pos.z);
+            ImGui::Text("Orientation_2: (%.2f, %.2f, %.2f, %.2f)", box2._q.w, box2._q.x, box2._q.y, box2._q.z);
+            ImGui::SliderFloat3("Velocity_2", glm::value_ptr(box2._velocity), -5.0f, 5.0f);
+            ImGui::SliderFloat3("Omega_2", glm::value_ptr(box2._omega), -5.0f, 5.0f);
         }
-        if (ImGui::CollapsingHeader("Force", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::SliderFloat("force_pos_x", &_forcePos.x, 0, _dim[0]);
-            ImGui::SliderFloat("force_pos_y", &_forcePos.y, 0, _dim[1]);
-            ImGui::SliderFloat("force_pos_z", &_forcePos.z, 0, _dim[2]);
-
-            ImGui::SliderFloat("force_x", &_force.x, -5.f, 5.f);
-            ImGui::SliderFloat("force_y", &_force.y, -5.f, 5.f);
-            ImGui::SliderFloat("force_z", &_force.z, -5.f, 5.f);
-        }
-        if (ImGui::CollapsingHeader("Rotation", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::SliderFloat("omega_x", &_omega.x, -5.f, 5.f);
-            ImGui::SliderFloat("omega_y", &_omega.z, -5.f, 5.f);
-            ImGui::SliderFloat("omega_y", &_omega.z, -5.f, 5.f);
-            ImGui::Text("Orientation: (%.2f, %.2f, %.2f, %.2f)", _q.w, _q.x, _q.y, _q.z);
-        }
-        ImGui::Spacing();
     }
 
-    void CaseSingleBox::AdvanceSingleBox(float dt) {
+    void CaseTwoBox::ResolveCollision(Box & box1, Box & box2) {
+        using ColGeoPtr_t = std::shared_ptr<fcl::CollisionGeometry<float>>;
+        ColGeoPtr_t geo1(new fcl::Box<float>(box1._dim.x, box1._dim.y, box1._dim.z));
+        ColGeoPtr_t geo2(new fcl::Box<float>(box2._dim.x, box2._dim.y, box2._dim.z));
+        fcl::Transform3f trans1(Eigen::Translation3f(Eigen::Vector3f(box1._pos.x, box1._pos.y, box1._pos.z)) * Eigen::Quaternionf(box1._q.w, box1._q.x, box1._q.y, box1._q.z));
+        fcl::Transform3f trans2(Eigen::Translation3f(Eigen::Vector3f(box2._pos.x, box2._pos.y, box2._pos.z)) * Eigen::Quaternionf(box2._q.w, box2._q.x, box2._q.y, box2._q.z));
+        fcl::CollisionObject<float> obj1(geo1, trans1);
+        fcl::CollisionObject<float> obj2(geo2, trans2);
+        fcl::CollisionRequest<float> colRequest(8, true);
+        fcl::CollisionResult<float>  colRes;
+        fcl::collide(&obj1, &obj2, colRequest, colRes);
+        if (colRes.isCollision()) {
+            std::vector<fcl::Contact<float>> contacts;
+            colRes.getContacts(contacts);
+            glm::vec3 colPos { 0.0f };
+            glm::vec3 colNormal { 0.0f };
+            float     colDepth = 0.0f;
+            int       counter {0};
+            for (const auto & contact : contacts) {
+                colPos += glm::vec3(contact.pos[0], contact.pos[1], contact.pos[2]);
+                colNormal += glm::vec3(contact.normal[0], contact.normal[1], contact.normal[2]);
+                colDepth += contact.penetration_depth;
+                counter++;
+            }
+            static_cast<float>(counter);
+            colPos /= counter;
+            colDepth /= counter;
+            colNormal = glm::normalize(colNormal);
+            glm::vec3 Rr1 = colPos - box1._pos;
+            glm::vec3 Rr2 = colPos - box2._pos;
+            glm::vec3 colVel1 = box1._velocity + glm::cross(box1._omega, Rr1);
+            glm::vec3 colVel2 = box2._velocity + glm::cross(box2._omega, Rr2);
+            glm::vec3 vRel = colVel2 - colVel1;
+            float     dotProduct = glm::dot(vRel, colNormal);
+            if ( dotProduct < 0) {
+                // Resolve Collision
+                glm::vec3 vRelN = dotProduct * colNormal;
+                glm::vec3 vRelT = vRel - vRelN;
+                glm::vec3 vRelNn = -_muN * vRelN;
+                float     alpha  = fmax(1.0f - _muT * (1 + _muN) * glm::length(vRelN) / glm::length(vRelT), 0.0f);
+                glm::vec3 vRelTn = alpha * vRelT;
+                glm::vec3 vReln  = vRelNn + vRelTn;
+
+                glm::mat3 r1(0.0f, -Rr1.z, Rr1.y, Rr1.z, 0.0f, -Rr1.x, -Rr1.y, Rr1.x, 0.0f);
+                glm::mat3 R1 = glm::mat3_cast(box1._q);
+                glm::mat3 I_world1 = R1 * box1._I * glm::transpose(R1);
+                glm::mat3 I_world_inv1 = glm::inverse(I_world1);
+                glm::mat3 K1           = 1.0f / box1._mass * glm::mat3(1.0f) - r1 * I_world_inv1 * r1;
+
+                glm::mat3 r2(0.0f, -Rr2.z, Rr2.y, Rr2.z, 0.0f, -Rr2.x, -Rr2.y, Rr2.x, 0.0f);
+                glm::mat3 R2 = glm::mat3_cast(box2._q);
+                glm::mat3 I_world2 = R2 * box2._I * glm::transpose(R2);
+                glm::mat3 I_world_inv2 = glm::inverse(I_world2);
+                glm::mat3 K2           = 1.0f / box2._mass * glm::mat3(1.0f) - r2 * I_world_inv2 * r2;
+
+                glm::mat3 K = K1 + K2;
+                glm::vec3 j = glm::inverse(K) * (vReln - vRel);
+                box1._velocity += -j / box1._mass;
+                box2._velocity += j / box2._mass;
+                box1._omega += I_world_inv1 * glm::cross(Rr1, -j);
+                box2._omega += I_world_inv2 * glm::cross(Rr2, j);
+            }
+        }
+    }
+
+    void CaseTwoBox::AdvanceTwoBox(float dt) {
+        // Resolve Collision
+        ResolveCollision(box1, box2);
         // Translational Motion
-        _velocity += dt * _force / _mass;
-        _center += _velocity * dt;
+        box1._pos += box1._velocity * dt;
+        box2._pos += box2._velocity * dt;
         // Rotational Motion
-        glm::mat3 R           = glm::mat3_cast(_q);
-        glm::vec3 torque      = glm::cross(R * (_forcePos - _dim * .5f), _force);
-        glm::mat3 I_world     = R * _I * glm::transpose(R);
-        glm::mat3 I_world_inv = glm::inverse(I_world);
-        _omega += dt * I_world_inv * (torque - glm::cross(_omega, I_world * _omega));
-        glm::quat rotQuat = glm::exp(0.5f * dt * glm::quat(0.f, _omega));
-        _q                = glm::normalize(rotQuat * _q);
+        glm::mat3 R1          = glm::mat3_cast(box1._q);
+        glm::mat3 I_world1     = R1 * box1._I * glm::transpose(R1);
+        glm::mat3 I_world_inv1 = glm::inverse(I_world1);
+        box1._omega += dt * I_world_inv1 * (-glm::cross(box1._omega, I_world1 * box1._omega));
+        box1._q = glm::normalize(glm::exp(0.5f * dt * glm::quat(0.f, box1._omega)) * box1._q);
+
+        glm::mat3 R2           = glm::mat3_cast(box2._q);
+        glm::mat3 I_world2     = R2 * box2._I * glm::transpose(R2);
+        glm::mat3 I_world_inv2 = glm::inverse(I_world2);
+        box2._omega += dt * I_world_inv2 * (-glm::cross(box2._omega, I_world2 * box2._omega));
+        box2._q = glm::normalize(glm::exp(0.5f * dt * glm::quat(0.f, box2._omega)) * box2._q);
     }
 
-    Common::CaseRenderResult CaseSingleBox::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
+    Common::CaseRenderResult CaseTwoBox::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
         // apply mouse control first
         OnProcessMouseControl(_cameraManager.getMouseMove());
         if (! _isStopped) {
-            AdvanceSingleBox(Engine::GetDeltaTime());
+            AdvanceTwoBox(Engine::GetDeltaTime());
         }
         // rendering
         _frame.Resize(desiredSize);
@@ -97,30 +133,36 @@ namespace VCX::Labs::RigidBody {
         glEnable(GL_LINE_SMOOTH);
         glLineWidth(.5f);
 
-        std::vector<glm::vec3> VertsPosition;
-        glm::mat3              rotMat = glm::mat3_cast(_q);
-        std::vector<glm::vec3> localVerts = {
-            { -_dim[0] / 2,  _dim[1] / 2,  _dim[2] / 2 },
-            {  _dim[0] / 2,  _dim[1] / 2,  _dim[2] / 2 },
-            {  _dim[0] / 2,  _dim[1] / 2, -_dim[2] / 2 },
-            { -_dim[0] / 2,  _dim[1] / 2, -_dim[2] / 2 },
-            { -_dim[0] / 2, -_dim[1] / 2,  _dim[2] / 2 },
-            {  _dim[0] / 2, -_dim[1] / 2,  _dim[2] / 2 },
-            {  _dim[0] / 2, -_dim[1] / 2, -_dim[2] / 2 },
-            { -_dim[0] / 2, -_dim[1] / 2, -_dim[2] / 2 }
-        };
-        for (const auto & localVert : localVerts) {
-            VertsPosition.push_back(_center + rotMat * localVert);
+        // Draw Box1
+        std::vector<glm::vec3> VertsPosition1;
+        glm::mat3              rotMat1 = glm::mat3_cast(box1._q);
+        for (const auto & vertPos : box1._verticesPos) {
+            VertsPosition1.push_back(box1._pos + rotMat1 * vertPos);
         }
-        auto span_bytes = Engine::make_span_bytes<glm::vec3>(VertsPosition);
+        auto span_bytes1 = Engine::make_span_bytes<glm::vec3>(VertsPosition1);
 
-        _program.GetUniforms().SetByName("u_Color", _boxColor);
-        _boxItem.UpdateVertexBuffer("position", span_bytes);
-        _boxItem.Draw({ _program.Use() });
+        _program.GetUniforms().SetByName("u_Color", box1._color);
+        box1._triangleItem.UpdateVertexBuffer("position", span_bytes1);
+        box1._triangleItem.Draw({ _program.Use() });
 
         _program.GetUniforms().SetByName("u_Color", glm::vec3(1.f, 1.f, 1.f));
-        _lineItem.UpdateVertexBuffer("position", span_bytes);
-        _lineItem.Draw({ _program.Use() });
+        box1._lineItem.UpdateVertexBuffer("position", span_bytes1);
+        box1._lineItem.Draw({ _program.Use() });
+
+        //Draw Box2
+        std::vector<glm::vec3> VertsPosition2;
+        glm::mat3              rotMat2 = glm::mat3_cast(box2._q);
+        for (const auto & vertPos : box2._verticesPos) {
+            VertsPosition2.push_back(box2._pos + rotMat2 * vertPos);
+        }
+        auto span_bytes2 = Engine::make_span_bytes<glm::vec3>(VertsPosition2);
+        _program.GetUniforms().SetByName("u_Color", box2._color);
+        box2._triangleItem.UpdateVertexBuffer("position", span_bytes2);
+        box2._triangleItem.Draw({ _program.Use() });
+
+        _program.GetUniforms().SetByName("u_Color", glm::vec3(1.f, 1.f, 1.f));
+        box2._lineItem.UpdateVertexBuffer("position", span_bytes2);
+        box2._lineItem.Draw({ _program.Use() });
 
         glLineWidth(1.f);
         glPointSize(1.f);
@@ -134,13 +176,13 @@ namespace VCX::Labs::RigidBody {
         };
     }
 
-    void CaseSingleBox::OnProcessInput(ImVec2 const & pos) {
+    void CaseTwoBox::OnProcessInput(ImVec2 const & pos) {
         _cameraManager.ProcessInput(_camera, pos);
     }
 
-    void CaseSingleBox::OnProcessMouseControl(glm::vec3 mouseDelta) {
+    void CaseTwoBox::OnProcessMouseControl(glm::vec3 mouseDelta) {
         float movingScale = 0.1f;
-        _center += mouseDelta * movingScale;
+        //_center += mouseDelta * movingScale;
     }
 
 } // namespace VCX::Labs::RigidBody

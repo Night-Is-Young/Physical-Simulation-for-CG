@@ -13,7 +13,7 @@ namespace VCX::Labs::RigidBody {
     public:
         CaseSingleBox();
 
-        virtual std::string_view const GetName() override { return "Draw a 3D Box"; }
+        virtual std::string_view const GetName() override { return "Single Box Simulation"; }
 
         virtual void                     OnSetupPropsUI() override;
         virtual Common::CaseRenderResult OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) override;
