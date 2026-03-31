@@ -27,7 +27,6 @@ namespace VCX::Labs::RigidBody {
             ImGui::Text("Orientation_2: (%.2f, %.2f, %.2f, %.2f)", box2._q.w, box2._q.x, box2._q.y, box2._q.z);
             ImGui::SliderFloat3("Velocity_2", glm::value_ptr(box2._velocity), -5.0f, 5.0f);
             ImGui::SliderFloat3("Omega_2", glm::value_ptr(box2._omega), -5.0f, 5.0f);
-            ''
         }
     }
 

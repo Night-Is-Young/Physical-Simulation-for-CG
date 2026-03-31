@@ -8,16 +8,16 @@
 namespace VCX::Labs::RigidBody {
     struct Box {
         int _id;
-        glm::vec4                           _color { 121.0f / 255, 207.0f / 255, 171.0f / 255 };
-        float _mass;
-        glm::vec3 _dim;
-        glm::vec3 _pos;
-        glm::mat3 _I;
+        glm::vec3                           _color;
+        float                               _mass;
+        glm::vec3                           _dim;
+        glm::vec3                           _pos;
+        glm::mat3                           _I;
         glm::mat3                           _I_world;
-        glm::quat _q;
-        glm::vec3 _velocity;
-        glm::vec3 _omega;
-        std::vector<glm::vec3> _verticesPos;
+        glm::quat                           _q;
+        glm::vec3                           _velocity;
+        glm::vec3                           _omega;
+        std::vector<glm::vec3>              _verticesPos;
         Engine::GL::UniqueIndexedRenderItem _triangleItem;
         Engine::GL::UniqueIndexedRenderItem _lineItem;
 
@@ -26,7 +26,7 @@ namespace VCX::Labs::RigidBody {
         Box(Box &&)                  = default;
         Box & operator=(Box &&)      = default;
 
-        Box(int id, float mass, glm::vec3 dim, glm::vec3 position, glm::vec3 velocity = glm::vec3(0.0f), glm::vec3 omega = glm::vec3(0.0f), glm::vec4 color = glm::vec4(0.0f, 0.5f, 0.5f, 0.8f), glm::quat q = glm::quat(1.0f, 0.0f, 0.0f, 0.0f)):
+        Box(int id, float mass, glm::vec3 dim, glm::vec3 position, glm::vec3 velocity = glm::vec3(0.0f), glm::vec3 omega = glm::vec3(0.0f), glm::vec3 color = glm::vec3(0.0f, 0.5f, 0.5f), glm::quat q = glm::quat(1.0f, 0.0f, 0.0f, 0.0f)):
             _id(id),
             _color(color),
             _mass(mass),
