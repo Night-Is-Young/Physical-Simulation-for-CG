@@ -2,64 +2,45 @@
 
 #include "Engine/GL/RenderItem.h"
 #include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
 #include <vector>
 
 namespace VCX::Labs::RigidBody {
-    struct Box {
-        int _id;
+    struct Wall {
+        int                                 _id;
         glm::vec3                           _color;
-        float                               _mass;
         glm::vec3                           _dim;
         glm::vec3                           _pos;
-        glm::mat3                           _I;
-        glm::mat3                           _I_world;
-        glm::quat                           _q;
-        glm::vec3                           _velocity;
-        glm::vec3                           _omega;
+        glm::vec3                           _tg1;
+        glm::vec3                           _tg2;
+        glm::vec3                           _normal;
         std::vector<glm::vec3>              _verticesPos;
         Engine::GL::UniqueIndexedRenderItem _triangleItem;
         Engine::GL::UniqueIndexedRenderItem _lineItem;
 
-        Box(const Box &)             = delete;
-        Box & operator=(const Box &) = delete;
-        Box(Box &&)                  = default;
-        Box & operator=(Box &&)      = default;
-
-        Box(int id, float mass, glm::vec3 dim, glm::vec3 pos, glm::vec3 velocity = glm::vec3(0.0f), glm::vec3 omega = glm::vec3(0.0f), glm::vec3 color = glm::vec3(0.0f, 0.3f, 0.3f), glm::quat q = glm::quat(1.0f, 0.0f, 0.0f, 0.0f)):
+        Wall(int id, glm::vec3 pos, glm::vec3 dim, glm::vec3 tg1, glm::vec3 tg2, glm::vec3 color = glm::vec3(0.9f, 0.9f, 0.9f)):
             _id(id),
             _color(color),
-            _mass(mass),
-            _dim(dim),
-            _I(1.0f / 12.0f * mass * glm::mat3(dim.y * dim.y + dim.z * dim.z, 0.0f, 0.0f,
-                0.0f, dim.x * dim.x + dim.z * dim.z, 0.0f,
-                0.0f, 0.0f, dim.x * dim.x + dim.y * dim.y)),
             _pos(pos),
-            _q(glm::normalize(q)),
-            _velocity(velocity),
-            _omega(omega),
-            _verticesPos({ glm::vec3(-dim.x, dim.y, dim.z) / 2.0f,
-                glm::vec3(dim.x, dim.y, dim.z) / 2.0f,
-                glm::vec3(dim.x, dim.y, -dim.z) / 2.0f,
-                glm::vec3(-dim.x, dim.y, -dim.z) / 2.0f,
-                glm::vec3(-dim.x, -dim.y, dim.z) / 2.0f,
-                glm::vec3(dim.x, -dim.y, dim.z) / 2.0f,
-                glm::vec3(dim.x, -dim.y, -dim.z) / 2.0f,
-                glm::vec3(-dim.x, -dim.y, -dim.z) / 2.0f }),
+            _dim(dim),
+            _tg1(glm::normalize(tg1)),
+            _tg2(glm::normalize(tg2)),
+            _normal(glm::normalize(glm::cross(tg1, tg2))),
+            _verticesPos({ 
+                pos + tg1 * dim.x / 2.0f + tg2 * dim.y / 2.0f,
+                pos - tg1 * dim.x / 2.0f + tg2 * dim.y / 2.0f,
+                pos - tg1 * dim.x / 2.0f - tg2 * dim.y / 2.0f,
+                pos + tg1 * dim.x / 2.0f - tg2 * dim.y / 2.0f,
+                }),
             _triangleItem(Engine::GL::VertexLayout().Add<glm::vec3>("position", Engine::GL::DrawFrequency::Stream, 0), Engine::GL::PrimitiveType::Triangles),
             _lineItem(Engine::GL::VertexLayout().Add<glm::vec3>("position", Engine::GL::DrawFrequency::Stream, 0), Engine::GL::PrimitiveType::Lines) {
-            glm::mat3 R = glm::mat3_cast(q);
-            _I_world     = R * _I * glm::transpose(R);
-            //     3-----2
-            //    /|    /|
-            //   0 --- 1 |
-            //   | 7 - | 6
-            //   |/    |/
-            //   4 --- 5
-            const std::vector<std::uint32_t> boxLineIndex { 0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7 };
-            const std::vector<std::uint32_t> boxTriIndex { 0, 1, 2, 0, 2, 3, 1, 0, 4, 1, 4, 5, 1, 5, 6, 1, 6, 2, 2, 7, 3, 2, 6, 7, 0, 3, 7, 0, 7, 4, 4, 6, 5, 4, 7, 6 };
-            _triangleItem.UpdateElementBuffer(boxTriIndex);
-            _lineItem.UpdateElementBuffer(boxLineIndex);
+            //   1 --- 0
+            //   |     |
+            //   |     |
+            //   2 --- 3
+            const std::vector<std::uint32_t> wallLineIndex { 0, 1, 1, 2, 2, 3, 3, 0 };
+            const std::vector<std::uint32_t> wallTriIndex { 0, 1, 2, 0, 2, 3 };
+            _triangleItem.UpdateElementBuffer(wallTriIndex);
+            _lineItem.UpdateElementBuffer(wallLineIndex);
         }
     };
 } // namespace VCX::Labs::RigidBody
