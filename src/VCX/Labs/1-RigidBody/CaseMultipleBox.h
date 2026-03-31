@@ -11,9 +11,9 @@
 
 namespace VCX::Labs::RigidBody {
 
-    class CaseMutipleBox : public Common::ICase {
+    class CaseMultipleBox : public Common::ICase {
     public:
-        CaseMutipleBox();
+        CaseMultipleBox();
 
         virtual std::string_view const GetName() override { return "Multiple Boxes Simulation"; }
         virtual void                     OnSetupPropsUI() override;
@@ -23,7 +23,7 @@ namespace VCX::Labs::RigidBody {
         void OnProcessMouseControl(glm::vec3 mouseDelta);
         void AdvanceMultipleBox(float dt);
         void ResolveCollisionB2B(Box & box1, Box & box2);
-        void ResolveCollisionB2W(Box & box, Wall & wall);
+        void ResolveCollisionB2W(Box & box, const Wall & wall);
 
     private:
         Engine::GL::UniqueProgram           _program;

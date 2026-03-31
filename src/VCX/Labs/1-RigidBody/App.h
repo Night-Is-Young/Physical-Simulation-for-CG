@@ -4,8 +4,10 @@
 
 #include "Engine/app.h"
 #include "Labs/1-RigidBody/Box.h"
+#include "Labs/1-RigidBody/Wall.h"
 #include "Labs/1-RigidBody/CaseSingleBox.h"
 #include "Labs/1-RigidBody/CaseTwoBox.h"
+#include "Labs/1-RigidBody/CaseMultipleBox.h"
 #include "Labs/Common/UI.h"
 
 namespace VCX::Labs::RigidBody {
@@ -13,13 +15,13 @@ namespace VCX::Labs::RigidBody {
     private:
         Common::UI _ui;
 
-        CaseSingleBox _CaseSingleBox;
-        CaseTwoBox    _CaseTwoBox;
+        CaseSingleBox   _CaseSingleBox;
+        CaseTwoBox      _CaseTwoBox;
+        CaseMultipleBox _CaseMultipleBox;
 
         std::size_t _caseId = 0;
 
-        std::vector<std::reference_wrapper<Common::ICase>> _cases = { _CaseSingleBox, _CaseTwoBox };
-
+        std::vector<std::reference_wrapper<Common::ICase>> _cases = { _CaseSingleBox, _CaseTwoBox, _CaseMultipleBox };
     public:
         App();
 

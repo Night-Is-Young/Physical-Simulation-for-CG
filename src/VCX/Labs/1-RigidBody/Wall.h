@@ -8,7 +8,7 @@ namespace VCX::Labs::RigidBody {
     struct Wall {
         int                                 _id;
         glm::vec3                           _color;
-        glm::vec3                           _dim;
+        glm::vec2                           _dim;
         glm::vec3                           _pos;
         glm::vec3                           _tg1;
         glm::vec3                           _tg2;
@@ -17,7 +17,7 @@ namespace VCX::Labs::RigidBody {
         Engine::GL::UniqueIndexedRenderItem _triangleItem;
         Engine::GL::UniqueIndexedRenderItem _lineItem;
 
-        Wall(int id, glm::vec3 pos, glm::vec3 dim, glm::vec3 tg1, glm::vec3 tg2, glm::vec3 color = glm::vec3(0.9f, 0.9f, 0.9f)):
+        Wall(int id, glm::vec3 pos, glm::vec2 dim, glm::vec3 tg1, glm::vec3 tg2, glm::vec3 color = glm::vec3(0.1f, 0.1f, 0.1f)):
             _id(id),
             _color(color),
             _pos(pos),

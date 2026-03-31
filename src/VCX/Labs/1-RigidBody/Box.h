@@ -26,7 +26,7 @@ namespace VCX::Labs::RigidBody {
         Box(Box &&)                  = default;
         Box & operator=(Box &&)      = default;
 
-        Box(int id, float mass, glm::vec3 dim, glm::vec3 pos, glm::vec3 velocity = glm::vec3(0.0f), glm::vec3 omega = glm::vec3(0.0f), glm::vec3 color = glm::vec3(0.0f, 0.3f, 0.3f), glm::quat q = glm::quat(1.0f, 0.0f, 0.0f, 0.0f)):
+        Box(int id, float mass, glm::vec3 dim, glm::vec3 pos, glm::vec3 velocity = glm::vec3(0.0f), glm::vec3 omega = glm::vec3(0.0f), glm::vec3 color = glm::vec3(0.0f, 0.5f, 0.5f), glm::quat q = glm::quat(1.0f, 0.0f, 0.0f, 0.0f)):
             _id(id),
             _color(color),
             _mass(mass),
