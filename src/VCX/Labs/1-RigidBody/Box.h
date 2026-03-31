@@ -8,7 +8,7 @@
 namespace VCX::Labs::RigidBody {
     struct Box {
         int _id;
-        glm::vec4 _color;
+        glm::vec4                           _color { 121.0f / 255, 207.0f / 255, 171.0f / 255 };
         float _mass;
         glm::vec3 _dim;
         glm::vec3 _pos;
