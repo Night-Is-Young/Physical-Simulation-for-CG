@@ -4,7 +4,7 @@
 #include "Engine/GL/Program.h"
 #include "Engine/GL/UniformBlock.hpp"
 #include "Engine/Sphere.h"
-#include "Labs/1-RigidBody/FluidSimulator.h"
+#include "Labs/1-RigidBody/CradleSimulator.h"
 #include "Labs/Common/ICase.h"
 #include "Labs/Common/ImageRGB.h"
 #include "Labs/Common/OrbitCameraManager.h"
@@ -14,9 +14,9 @@
 
 namespace VCX::Labs::RigidBody {
 
-    class CaseFluid : public Common::ICase {
+    class CaseNewtonCradle : public Common::ICase {
     public:
-        CaseFluid(std::initializer_list<Assets::ExampleScene> && scenes);
+        CaseNewtonCradle(std::initializer_list<Assets::ExampleScene> && scenes);
 
         virtual std::string_view const GetName() override { return "Fluid Simulation"; }
 
@@ -56,4 +56,4 @@ namespace VCX::Labs::RigidBody {
         Engine::Scene const & GetScene(std::size_t const i) const { return VCX::Labs::Rendering::Content::Scenes[std::size_t(_scenes[i])]; }
         void                  ResetSystem();
     };
-} // namespace VCX::Labs::GettingStarted
+} // namespace VCX::Labs::RigidBody

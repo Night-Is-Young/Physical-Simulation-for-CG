@@ -1,6 +1,6 @@
 #include <spdlog/spdlog.h>
 #include "Engine/app.h"
-#include "Labs/1-RigidBody/CaseFluid.h"
+#include "Labs/1-RigidBody/CaseNewtonCradle.h"
 #include "Labs/Common/ImGuiHelper.h"
 #include <iostream>
 
@@ -17,7 +17,7 @@ namespace VCX::Labs::RigidBody {
     };
     const std::vector<std::uint32_t> line_index = { 0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7 }; // line index
 
-    CaseFluid::CaseFluid(std::initializer_list<Assets::ExampleScene> && scenes) :
+    CaseNewtonCradle::CaseNewtonCradle(std::initializer_list<Assets::ExampleScene> && scenes) :
         _scenes(scenes),
         _program(
             Engine::GL::UniqueProgram({
@@ -41,7 +41,7 @@ namespace VCX::Labs::RigidBody {
         _sphere = Engine::Model{Engine::Sphere(6,_r), 0};
     }
 
-    void CaseFluid::OnSetupPropsUI() {
+    void CaseNewtonCradle::OnSetupPropsUI() {
         if(ImGui::Button("Reset System")) 
             ResetSystem();
         ImGui::SameLine();
@@ -54,7 +54,7 @@ namespace VCX::Labs::RigidBody {
     }
 
 
-    Common::CaseRenderResult CaseFluid::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
+    Common::CaseRenderResult CaseNewtonCradle::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
         if (_recompute) {
             _recompute = false;
             _sceneObject.ReplaceScene(GetScene(_sceneIdx));
@@ -106,11 +106,11 @@ namespace VCX::Labs::RigidBody {
         };
     }
 
-    void CaseFluid::OnProcessInput(ImVec2 const& pos) {
+    void CaseNewtonCradle::OnProcessInput(ImVec2 const& pos) {
         _cameraManager.ProcessInput(_sceneObject.Camera, pos);
     }
 
-    void CaseFluid::ResetSystem(){
+    void CaseNewtonCradle::ResetSystem(){
         glm::vec3 tank(1.0f);
         glm::vec3 relWater = {0.6f, 0.8f, 0.6f};
         float           _h = tank.y / _res;

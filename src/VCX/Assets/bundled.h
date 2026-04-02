@@ -20,10 +20,12 @@ namespace VCX::Assets {
     inline constexpr auto ExampleScenes {
         std::to_array<std::string_view>({
             "assets/scenes/fluid/fluid.yaml",
+            "assets/scenes/rigid_body/newton_cradle.yaml",
         })
     };
 
     enum class ExampleScene {
         Fluid,
+        NewtonCradle,
     };
 }

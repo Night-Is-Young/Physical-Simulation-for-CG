@@ -8,7 +8,7 @@
 #include "Labs/1-RigidBody/CaseSingleBox.h"
 #include "Labs/1-RigidBody/CaseTwoBox.h"
 #include "Labs/1-RigidBody/CaseMultipleBox.h"
-#include "Labs/1-RigidBody/CaseFluid.h"
+#include "Labs/1-RigidBody/CaseNewtonCradle.h"
 #include "Labs/Common/UI.h"
 
 namespace VCX::Labs::RigidBody {
@@ -16,10 +16,10 @@ namespace VCX::Labs::RigidBody {
     private:
         Common::UI _ui;
 
-        CaseSingleBox   _CaseSingleBox;
-        CaseTwoBox      _CaseTwoBox;
-        CaseMultipleBox _CaseMultipleBox;
-        CaseFluid _CaseNewtonCradle;
+        CaseSingleBox    _CaseSingleBox;
+        CaseTwoBox       _CaseTwoBox;
+        CaseMultipleBox  _CaseMultipleBox;
+        CaseNewtonCradle _CaseNewtonCradle;
 
         std::size_t _caseId = 0;
 
