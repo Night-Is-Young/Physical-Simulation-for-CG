@@ -5,6 +5,7 @@
 #include "Engine/GL/UniformBlock.hpp"
 #include "Engine/Sphere.h"
 #include "Labs/1-RigidBody/CradleSimulator.h"
+#include "Labs/1-RigidBody/Ball.h"
 #include "Labs/Common/ICase.h"
 #include "Labs/Common/ImageRGB.h"
 #include "Labs/Common/OrbitCameraManager.h"
@@ -28,7 +29,6 @@ namespace VCX::Labs::RigidBody {
         std::vector<Assets::ExampleScene> const _scenes;
 
         Engine::GL::UniqueProgram         _program;
-        Engine::GL::UniqueProgram         _lineprogram;
         Engine::GL::UniqueRenderFrame     _frame;
         VCX::Labs::Rendering::SceneObject _sceneObject;
         std::size_t                       _sceneIdx { 0 };
@@ -42,15 +42,20 @@ namespace VCX::Labs::RigidBody {
         int                               _attenuationOrder { 2 };
         int                               _bumpMappingPercent { 20 };
 
-        Engine::GL::UniqueIndexedRenderItem _BoundaryItem;
         Common::OrbitCameraManager          _cameraManager;
         float                               _BndWidth { 2.0 };
         bool                                _stopped { false };
         Engine::Model                       _sphere;
-        int                                 _res { 16 };
-        float                               _r;
-        int                                 numofSpheres;
-        Fluid::Simulator                    _simulation;
+
+        int                                 _res { 30 };
+        float                               _r { 1.f };
+        float                               _mass { 1.f };
+        float                               _length { 5.f };
+        float                               _gravity { 9.81f };
+
+        int                                 numofSpheres { 2 };
+        int                                 numofSpheresPulled { 1 };
+        RigidBody::Simulator                _simulation;
 
         char const *          GetSceneName(std::size_t const i) const { return VCX::Labs::Rendering::Content::SceneNames[std::size_t(_scenes[i])].c_str(); }
         Engine::Scene const & GetScene(std::size_t const i) const { return VCX::Labs::Rendering::Content::Scenes[std::size_t(_scenes[i])]; }

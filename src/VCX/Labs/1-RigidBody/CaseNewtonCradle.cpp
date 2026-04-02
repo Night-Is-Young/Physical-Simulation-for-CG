@@ -5,17 +5,6 @@
 #include <iostream>
 
 namespace VCX::Labs::RigidBody {
-    const std::vector<glm::vec3> vertex_pos = {
-            glm::vec3(-0.5f, -0.5f, -0.5f),
-            glm::vec3(0.5f, -0.5f, -0.5f),  
-            glm::vec3(0.5f, 0.5f, -0.5f),  
-            glm::vec3(-0.5f, 0.5f, -0.5f), 
-            glm::vec3(-0.5f, -0.5f, 0.5f),  
-            glm::vec3(0.5f, -0.5f, 0.5f),   
-            glm::vec3(0.5f, 0.5f, 0.5f),   
-            glm::vec3(-0.5f, 0.5f, 0.5f)
-    };
-    const std::vector<std::uint32_t> line_index = { 0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7 }; // line index
 
     CaseNewtonCradle::CaseNewtonCradle(std::initializer_list<Assets::ExampleScene> && scenes) :
         _scenes(scenes),
@@ -23,22 +12,14 @@ namespace VCX::Labs::RigidBody {
             Engine::GL::UniqueProgram({
                 Engine::GL::SharedShader("assets/shaders/sphere_phong.vert"),
                 Engine::GL::SharedShader("assets/shaders/phong.frag") })),
-        _lineprogram(
-            Engine::GL::UniqueProgram({
-                Engine::GL::SharedShader("assets/shaders/flat.vert"),
-                Engine::GL::SharedShader("assets/shaders/flat.frag") })),
-        _sceneObject(1),
-        _BoundaryItem(Engine::GL::VertexLayout()
-            .Add<glm::vec3>("position", Engine::GL::DrawFrequency::Stream , 0), Engine::GL::PrimitiveType::Lines){ 
+        _sceneObject(1) { 
         _cameraManager.AutoRotate = false;
         _program.BindUniformBlock("PassConstants", 1);
         _program.GetUniforms().SetByName("u_DiffuseMap" , 0);
         _program.GetUniforms().SetByName("u_SpecularMap", 1);
         _program.GetUniforms().SetByName("u_HeightMap"  , 2);
-        _lineprogram.GetUniforms().SetByName("u_Color",  glm::vec3(1.0f));
-        _BoundaryItem.UpdateElementBuffer(line_index);
         ResetSystem();
-        _sphere = Engine::Model{Engine::Sphere(6,_r), 0};
+        _sphere = Engine::Model { Engine::Sphere(_res, _r), 0 };
     }
 
     void CaseNewtonCradle::OnSetupPropsUI() {
@@ -47,10 +28,6 @@ namespace VCX::Labs::RigidBody {
         ImGui::SameLine();
         if(ImGui::Button(_stopped ? "Start Simulation":"Stop Simulation"))
             _stopped = ! _stopped;
-        ImGui::Spacing();
-        ImGui::SliderFloat("Mass", &_simulation.Mass, .5f, 5.f);
-        ImGui::SliderFloat("Omega.", &_simulation.Omega, .1f, 1.f);
-        ImGui::SliderFloat("Damp.", &_simulation.Damping, .1f, 1.f);
     }
 
 
@@ -60,17 +37,14 @@ namespace VCX::Labs::RigidBody {
             _sceneObject.ReplaceScene(GetScene(_sceneIdx));
             _cameraManager.Save(_sceneObject.Camera);
         }
-        if (! _stopped) _simulation.SimulateTimestep(Engine::GetDeltaTime());
+        if (! _stopped) _simulation.SimulateTimestep(Engine::GetDeltaTime(), _gravity, _length);
         
-        _BoundaryItem.UpdateVertexBuffer("position", Engine::make_span_bytes<glm::vec3>(vertex_pos));
         _frame.Resize(desiredSize);
 
         _cameraManager.Update(_sceneObject.Camera);
         _sceneObject.PassConstantsBlock.Update(&VCX::Labs::Rendering::SceneObject::PassConstants::Projection, _sceneObject.Camera.GetProjectionMatrix((float(desiredSize.first) / desiredSize.second)));
         _sceneObject.PassConstantsBlock.Update(&VCX::Labs::Rendering::SceneObject::PassConstants::View, _sceneObject.Camera.GetViewMatrix());
         _sceneObject.PassConstantsBlock.Update(&VCX::Labs::Rendering::SceneObject::PassConstants::ViewPosition, _sceneObject.Camera.Eye);
-        _lineprogram.GetUniforms().SetByName("u_Projection", _sceneObject.Camera.GetProjectionMatrix((float(desiredSize.first) / desiredSize.second)));
-        _lineprogram.GetUniforms().SetByName("u_View"      , _sceneObject.Camera.GetViewMatrix());
         
         if (_uniformDirty) {
             _uniformDirty = false;
@@ -86,11 +60,15 @@ namespace VCX::Labs::RigidBody {
 
         glEnable(GL_DEPTH_TEST);
         glLineWidth(_BndWidth);
-        _BoundaryItem.Draw({ _lineprogram.Use() });
         glLineWidth(1.f);
 
-        Rendering::ModelObject m = Rendering::ModelObject(_sphere,_simulation.Positions);
-        auto const & material    = _sceneObject.Materials[0];
+        std::vector<glm::vec3> positions;
+        for (auto const & ball : _simulation.Balls) {
+            positions.push_back(ball._pos);
+        }
+
+        Rendering::ModelObject m        = Rendering::ModelObject(_sphere, positions);
+        auto const &           material = _sceneObject.Materials[0];
         m.Mesh.Draw({ material.Albedo.Use(),  material.MetaSpec.Use(), material.Height.Use(),_program.Use() },
             _sphere.Mesh.Indices.size(), 0, numofSpheres);
         
@@ -111,30 +89,13 @@ namespace VCX::Labs::RigidBody {
     }
 
     void CaseNewtonCradle::ResetSystem(){
-        glm::vec3 tank(1.0f);
-        glm::vec3 relWater = {0.6f, 0.8f, 0.6f};
-        float           _h = tank.y / _res;
-                        _r = 0.3 * _h; //cell size
-        float           dx = 2.0 * _r;
-        float           dy = sqrt(3.0) / 2.0 * dx;
-        float           dz = dx;
-        
-        int numX = floor((relWater.x * tank.x - 2.0  * _h -2.0 * _r) / dx);
-        int numY = floor((relWater.y * tank.y - 2.0  * _h -2.0 * _r) / dy);
-        int numZ = floor((relWater.z * tank.z - 2.0  * _h -2.0 * _r) / dz);
-        numofSpheres = numX * numY * numZ;
-
-        _simulation.Positions.clear();
-        _simulation.Velocities.clear();
-
-        for(int i = 0 ; i < numX ; i++)
-            for(int j = 0 ; j < numY ; j++)
-                for(int k = 0 ; k < numZ ; k++){
-                    _simulation.Positions.push_back(glm::vec3(_h + _r + dx * i + (j % 2 == 0 ? 0.0 : _r) +  0.1f,
-                     _h + _r + dy * j , _h + _r + dz * k + (j % 2 == 0 ? 0.0 : _r) ) + glm::vec3(-0.5f));
-                     _simulation.InitPositions.push_back(glm::vec3(_h + _r + dx * i + (j % 2 == 0 ? 0.0 : _r),
-                     _h + _r + dy * j, _h + _r + dz * k + (j % 2 == 0 ? 0.0 : _r)) + glm::vec3(-0.5f));
-                    _simulation.Velocities.push_back(glm::vec3(0.0f));
-                }
+        _simulation.Balls.clear();
+        for (int i = 0; i < numofSpheres; i++) {
+            _simulation.Balls.emplace_back(Ball(i, _mass, _r, glm::vec3(float(i) * 2.f * _r, 0, -_length)));
+        }
+        for (int i = 0; i < numofSpheresPulled; i++) {
+            _simulation.Balls[i]._pos.x -= _length * .5f;
+            _simulation.Balls[i]._pos.z += _length * (1 - std::cos(glm::radians(30.f)));
+        }
     }
 }
