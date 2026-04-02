@@ -53,7 +53,7 @@ namespace VCX::Labs::RigidBody {
         float Ly = _walls[0]._dim.y;
         float boxSize { 2.0f };
         float horizontalSpacing { 1.0f };
-        float verticalSpacing { 1.5f };
+        float verticalSpacing { 4.0f };
         int   Nx = static_cast<int>((Lx - boxSize - 2 * horizontalSpacing) / (boxSize + horizontalSpacing)) + 1;
         int   Ny = static_cast<int>((Ly - boxSize - 2 * horizontalSpacing) / (boxSize + horizontalSpacing)) + 1;
 
@@ -162,18 +162,28 @@ namespace VCX::Labs::RigidBody {
             static_cast<float>(counter);
             colPos /= counter;
             colDepth /= counter;
-            box._pos += colDepth * n;
-            colPos += colDepth * n;
-            glm::vec3 Rr = colPos - box._pos;
-            glm::vec3 colVel = box._velocity + glm::cross(box._omega, Rr);
-            float     dotProduct = glm::dot(colVel, n);
-            if (dotProduct < 0) {
+
+            const float beta = 0.2f;
+            const float slop = 0.01f;
+            colDepth         = std::max(colDepth - slop, 0.0f);
+
+            box._pos += beta * colDepth * n;
+            colPos += beta * colDepth * n;
+            glm::vec3   Rr                 = colPos - box._pos;
+            glm::vec3   colVel             = box._velocity + glm::cross(box._omega, Rr);
+            float       dotProduct         = glm::dot(colVel, n);
+            const float _velocityThreshold = 0.2f;
+            if (dotProduct < -_velocityThreshold) {
                 // Resolve Collision
                 glm::mat3 I_world = box._I_world;
                 glm::mat3 I_world_inv = glm::inverse(I_world);
                 float     J           = (-1.0f - _c) * dotProduct / (1.0f / box._mass + glm::dot(n, glm::cross(I_world_inv * glm::cross(Rr, n), Rr)));
                 box._velocity += J * n / box._mass;
                 box._omega += I_world_inv * glm::cross(Rr, J * n);
+            } else if (dotProduct < _velocityThreshold) {
+                glm::vec3 vn = glm::dot(box._velocity, n) * n;
+                box._velocity -= vn;
+                box._omega *= 0.98f;
             }
         }
     }
@@ -227,6 +237,7 @@ namespace VCX::Labs::RigidBody {
             box._lineItem.UpdateVertexBuffer("position", span_bytes);
             _program.GetUniforms().SetByName("u_Color", box._color);
             box._triangleItem.Draw({ _program.Use() });
+            _program.GetUniforms().SetByName("u_Color", glm::vec3(1.0f, 1.0f, 1.0f));
             box._lineItem.Draw({ _program.Use() });
         }
 
