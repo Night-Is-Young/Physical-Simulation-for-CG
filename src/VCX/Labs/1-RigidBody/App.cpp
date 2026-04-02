@@ -4,7 +4,8 @@
 namespace VCX::Labs::RigidBody {
 
     App::App():
-        _ui(Labs::Common::UIOptions {}) {
+        _ui(Labs::Common::UIOptions {}),
+        _CaseNewtonCradle({ Assets::ExampleScene::Fluid }) {
     }
 
     void App::OnFrame() {
