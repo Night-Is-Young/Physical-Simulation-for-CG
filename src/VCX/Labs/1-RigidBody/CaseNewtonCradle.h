@@ -53,7 +53,7 @@ namespace VCX::Labs::RigidBody {
         float                               _length { 5.f };
         float                               _gravity { 9.81f };
 
-        int                                 numofSpheres { 2 };
+        int                                 numofSpheres { 5 };
         int                                 numofSpheresPulled { 1 };
         RigidBody::Simulator                _simulation;
 
