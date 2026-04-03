@@ -28,6 +28,8 @@ namespace VCX::Labs::RigidBody {
         ImGui::SameLine();
         if(ImGui::Button(_stopped ? "Start Simulation":"Stop Simulation"))
             _stopped = ! _stopped;
+        ImGui::SliderInt("Spheres", &_numofSpheres, 1, 10);
+        ImGui::SliderInt("Spheres Pulled", &_numofSpheresPulled, 1, _numofSpheres);
     }
 
 
@@ -70,7 +72,7 @@ namespace VCX::Labs::RigidBody {
         Rendering::ModelObject m        = Rendering::ModelObject(_sphere, positions);
         auto const &           material = _sceneObject.Materials[0];
         m.Mesh.Draw({ material.Albedo.Use(),  material.MetaSpec.Use(), material.Height.Use(),_program.Use() },
-            _sphere.Mesh.Indices.size(), 0, numofSpheres);
+            _sphere.Mesh.Indices.size(), 0, _numofSpheres);
         
         glDepthFunc(GL_LEQUAL);
         glDepthFunc(GL_LESS);
@@ -90,10 +92,10 @@ namespace VCX::Labs::RigidBody {
 
     void CaseNewtonCradle::ResetSystem(){
         _simulation.Balls.clear();
-        for (int i = 0; i < numofSpheres; i++) {
+        for (int i = 0; i < _numofSpheres; i++) {
             _simulation.Balls.emplace_back(Ball(i, _mass, _r, glm::vec3(float(i) * 2.f * _r, 0, -_length)));
         }
-        for (int i = 0; i < numofSpheresPulled; i++) {
+        for (int i = 0; i < _numofSpheresPulled; i++) {
             _simulation.Balls[i]._pos.x -= _length * .5f;
             _simulation.Balls[i]._pos.z += _length * (1 - std::cos(glm::radians(30.f)));
         }
