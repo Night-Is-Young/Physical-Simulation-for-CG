@@ -32,7 +32,7 @@ namespace VCX::Labs::RigidBody {
         
         Box box1;
         Box box2;
-        bool _isStopped = false;
+        bool _stopped = false;
         float _muN = 0.8f;
         float _muT = 0.52;
     };

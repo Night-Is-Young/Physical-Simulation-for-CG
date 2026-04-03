@@ -24,6 +24,7 @@ namespace VCX::Labs::RigidBody {
         void AdvanceMultipleBox(float dt);
         void ResolveCollisionB2B(Box & box1, Box & box2);
         void ResolveCollisionB2W(Box & box, const Wall & wall);
+        void ResetSystem();
 
     private:
         Engine::GL::UniqueProgram           _program;
@@ -33,9 +34,9 @@ namespace VCX::Labs::RigidBody {
         
         std::vector<Wall> _walls;
         std::vector<Box>  _boxes;
-        int               _numBoxes  = 100;
+        int               _numBoxes  = 4;
         float             _gravity   = 9.8f;
-        bool              _isStopped = false;
+        bool              _stopped   = false;
         float             _muN       = 0.8f;
         float             _muT       = 0.5f;
         float             _c         = 0.5f;

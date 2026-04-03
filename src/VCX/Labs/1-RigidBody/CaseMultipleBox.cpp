@@ -47,34 +47,18 @@ namespace VCX::Labs::RigidBody {
             wall._triangleItem.UpdateVertexBuffer("position", span_bytes);
             wall._lineItem.UpdateVertexBuffer("position", span_bytes);
         }
-
-        // Initialize Boxes
-        float Lx = _walls[0]._dim.x;
-        float Ly = _walls[0]._dim.y;
-        float boxSize { 2.0f };
-        float horizontalSpacing { 1.0f };
-        float verticalSpacing { 4.0f };
-        int   Nx = static_cast<int>((Lx - boxSize - 2 * horizontalSpacing) / (boxSize + horizontalSpacing)) + 1;
-        int   Ny = static_cast<int>((Ly - boxSize - 2 * horizontalSpacing) / (boxSize + horizontalSpacing)) + 1;
-
-        for (int id { 0 }; id < _numBoxes; id++) {
-            int   k = id / (Nx * Ny);
-            int   j = (id - k * Nx * Ny) / Nx;
-            int   i = id - k * Nx * Ny - j * Nx;
-            float x = (-Lx / 2.0f + horizontalSpacing + boxSize / 2.0f) + i * (boxSize + horizontalSpacing);
-            float y = (-Ly / 2.0f + horizontalSpacing + boxSize / 2.0f) + j * (boxSize + horizontalSpacing);
-            float z = (_walls[0]._pos.z + verticalSpacing + boxSize / 2.0f) + k * (boxSize + verticalSpacing);
-            Box   box(id, 1.0f, glm::vec3(boxSize), glm::vec3(x, y, z), glm::sphericalRand(0.5f), glm::sphericalRand(1.0f));
-            _boxes.push_back(std::move(box));
-        }
-
+        ResetSystem();
         _cameraManager.AutoRotate = false;
         _cameraManager.Save(_camera);
     }
 
-
     void CaseMultipleBox::OnSetupPropsUI() {
-        //
+        if (ImGui::Button("Reset System"))
+            ResetSystem();
+        ImGui::SameLine();
+        if (ImGui::Button(_stopped ? "Start Simulation" : "Stop Simulation"))
+            _stopped = ! _stopped;
+        ImGui::SliderInt("Number of Boxes", &_numBoxes, 1, 100);
     }
 
     void CaseMultipleBox::ResolveCollisionB2B(Box & box1, Box & box2) {
@@ -189,11 +173,11 @@ namespace VCX::Labs::RigidBody {
     }
 
     void CaseMultipleBox::AdvanceMultipleBox(float dt) {
-        for (int id = 0; id < _numBoxes; id++) {
+        for (int id = 0; id < _boxes.size(); id++) {
             for (const auto & wall : _walls) {
                 ResolveCollisionB2W(_boxes[id], wall);
             }
-            for (int jd = id + 1; jd < _numBoxes; jd++) {
+            for (int jd = id + 1; jd < _boxes.size(); jd++) {
                 ResolveCollisionB2B(_boxes[id], _boxes[jd]);
             }
             _boxes[id]._omega += dt * glm::inverse(_boxes[id]._I_world) * (-glm::cross(_boxes[id]._omega, _boxes[id]._I_world * _boxes[id]._omega));
@@ -208,7 +192,7 @@ namespace VCX::Labs::RigidBody {
     Common::CaseRenderResult CaseMultipleBox::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
         // apply mouse control first
         OnProcessMouseControl(_cameraManager.getMouseMove());
-        if (! _isStopped) {
+        if (! _stopped) {
             AdvanceMultipleBox(Engine::GetDeltaTime());
         }
         // rendering
@@ -270,4 +254,26 @@ namespace VCX::Labs::RigidBody {
         //_center += mouseDelta * movingScale;
     }
 
+    void CaseMultipleBox::ResetSystem() {
+        _boxes.clear();
+
+        float Lx = _walls[0]._dim.x;
+        float Ly = _walls[0]._dim.y;
+        float boxSize { 2.0f };
+        float horizontalSpacing { 1.0f };
+        float verticalSpacing { 4.0f };
+        int   Nx = static_cast<int>((Lx - boxSize - 2 * horizontalSpacing) / (boxSize + horizontalSpacing)) + 1;
+        int   Ny = static_cast<int>((Ly - boxSize - 2 * horizontalSpacing) / (boxSize + horizontalSpacing)) + 1;
+
+        for (int id { 0 }; id < _numBoxes; id++) {
+            int   k = id / (Nx * Ny);
+            int   j = (id - k * Nx * Ny) / Nx;
+            int   i = id - k * Nx * Ny - j * Nx;
+            float x = (-Lx / 2.0f + horizontalSpacing + boxSize / 2.0f) + i * (boxSize + horizontalSpacing);
+            float y = (-Ly / 2.0f + horizontalSpacing + boxSize / 2.0f) + j * (boxSize + horizontalSpacing);
+            float z = (_walls[0]._pos.z + verticalSpacing + boxSize / 2.0f) + k * (boxSize + verticalSpacing);
+            Box   box(id, 1.0f, glm::vec3(boxSize), glm::vec3(x, y, z), glm::sphericalRand(0.5f), glm::sphericalRand(1.0f));
+            _boxes.push_back(std::move(box));
+        }
+    }
 } // namespace VCX::Labs::RigidBody

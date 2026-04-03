@@ -16,6 +16,8 @@ namespace VCX::Labs::RigidBody {
     }
 
     void CaseTwoBox::OnSetupPropsUI() {
+        if (ImGui::Button(_stopped ? "Start Simulation" : "Stop Simulation"))
+            _stopped = ! _stopped;
         if (ImGui::CollapsingHeader("Box1", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::Text("Position_1: (%.2f, %.2f, %.2f)", box1._pos.x, box1._pos.y, box1._pos.z);
             ImGui::Text("Orientation_1: (%.2f, %.2f, %.2f, %.2f)", box1._q.w, box1._q.x, box1._q.y, box1._q.z);
@@ -118,7 +120,7 @@ namespace VCX::Labs::RigidBody {
     Common::CaseRenderResult CaseTwoBox::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
         // apply mouse control first
         OnProcessMouseControl(_cameraManager.getMouseMove());
-        if (! _isStopped) {
+        if (! _stopped) {
             AdvanceTwoBox(Engine::GetDeltaTime());
         }
         // rendering

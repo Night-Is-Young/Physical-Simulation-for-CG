@@ -19,7 +19,7 @@ namespace VCX::Labs::RigidBody {
     public:
         CaseNewtonCradle(std::initializer_list<Assets::ExampleScene> && scenes);
 
-        virtual std::string_view const GetName() override { return "Fluid Simulation"; }
+        virtual std::string_view const GetName() override { return "Newton's Cradle"; }
 
         virtual void                     OnSetupPropsUI() override;
         virtual Common::CaseRenderResult OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) override;
