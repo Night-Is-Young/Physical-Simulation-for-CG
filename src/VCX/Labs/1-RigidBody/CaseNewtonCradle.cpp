@@ -29,7 +29,10 @@ namespace VCX::Labs::RigidBody {
         if(ImGui::Button(_stopped ? "Start Simulation":"Stop Simulation"))
             _stopped = ! _stopped;
         ImGui::SliderInt("Spheres", &_numofSpheres, 1, 10);
-        ImGui::SliderInt("Spheres Pulled", &_numofSpheresPulled, 1, _numofSpheres);
+        ImGui::SliderInt("Spheres Pulled Right", &_numofSpheresPulled1, 0, _numofSpheres);
+        ImGui::SliderInt("Spheres Pulled Left", &_numofSpheresPulled2, 0, _numofSpheres - _numofSpheresPulled1);
+        ImGui::SliderFloat("Initial Right Angle", &_theta1, 0.0f, 90.0f);
+        ImGui::SliderFloat("Initial Left Angle", &_theta2, 0.0f, 90.0f);
     }
 
 
@@ -71,8 +74,7 @@ namespace VCX::Labs::RigidBody {
 
         Rendering::ModelObject m        = Rendering::ModelObject(_sphere, positions);
         auto const &           material = _sceneObject.Materials[0];
-        m.Mesh.Draw({ material.Albedo.Use(),  material.MetaSpec.Use(), material.Height.Use(),_program.Use() },
-            _sphere.Mesh.Indices.size(), 0, _numofSpheres);
+        m.Mesh.Draw({ material.Albedo.Use(),  material.MetaSpec.Use(), material.Height.Use(),_program.Use() }, _sphere.Mesh.Indices.size(), 0, _simulation.Balls.size());
         
         glDepthFunc(GL_LEQUAL);
         glDepthFunc(GL_LESS);
@@ -95,9 +97,13 @@ namespace VCX::Labs::RigidBody {
         for (int i = 0; i < _numofSpheres; i++) {
             _simulation.Balls.emplace_back(Ball(i, _mass, _r, glm::vec3(float(i) * 2.f * _r, 0, -_length)));
         }
-        for (int i = 0; i < _numofSpheresPulled; i++) {
-            _simulation.Balls[i]._pos.x -= _length * .5f;
-            _simulation.Balls[i]._pos.z += _length * (1 - std::cos(glm::radians(30.f)));
+        for (int i = 0; i < _numofSpheresPulled1; i++) {
+            _simulation.Balls[i]._pos.x -= _length * std::sin(glm::radians(_theta1));
+            _simulation.Balls[i]._pos.z += _length * (1 - std::cos(glm::radians(_theta1)));
+        }
+        for (int i = 0; i < _numofSpheresPulled2; i++) {
+            _simulation.Balls[_numofSpheres - 1 - i]._pos.x += _length * std::sin(glm::radians(_theta2));
+            _simulation.Balls[_numofSpheres - 1 - i]._pos.z += _length * (1 - std::cos(glm::radians(_theta2)));
         }
     }
 }

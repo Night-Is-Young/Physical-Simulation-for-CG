@@ -52,9 +52,11 @@ namespace VCX::Labs::RigidBody {
         float                               _mass { 1.f };
         float                               _length { 5.f };
         float                               _gravity { 9.81f };
-
+        float                               _theta1 { 30.0f };
+        float                               _theta2 { 0.0f };
         int                                 _numofSpheres { 5 };
-        int                                 _numofSpheresPulled { 1 };
+        int                                 _numofSpheresPulled1 { 1 };
+        int                                 _numofSpheresPulled2 { 1 };
         RigidBody::Simulator                _simulation;
 
         char const *          GetSceneName(std::size_t const i) const { return VCX::Labs::Rendering::Content::SceneNames[std::size_t(_scenes[i])].c_str(); }

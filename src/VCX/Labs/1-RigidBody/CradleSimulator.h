@@ -11,8 +11,8 @@ namespace VCX::Labs::RigidBody {
         std::vector<Ball> Balls;
 
         void SimulateTimestep(float const dt, float const g, float const l) {
-            const int solverIterations = 5;
-            for (int k = 0; k < solverIterations; ++k) {
+            const int Iterations = 5;
+            for (int i = 0; i < Iterations; i++) {
                 ResolveCollision();
             }
             for (std::size_t i = 0; i < Balls.size(); i++) {
