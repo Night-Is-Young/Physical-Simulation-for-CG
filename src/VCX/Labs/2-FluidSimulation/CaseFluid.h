@@ -11,7 +11,6 @@
 #include "Labs/Scene/Content.h"
 #include "Labs/Scene/SceneObject.h"
 
-
 namespace VCX::Labs::FluidSimulation {
 
     class CaseFluid : public Common::ICase {
@@ -47,13 +46,14 @@ namespace VCX::Labs::FluidSimulation {
         float                               _BndWidth { 2.0 };
         bool                                _stopped { false };
         Engine::Model                       _sphere;
-        int                                 _res { 16 };
+        int                                 _res { 24 };
         float                               _r;
         int                                 numofSpheres;
         Fluid::Simulator                    _simulation;
+        Engine::Model                       _obstacleSphere;
 
         char const *          GetSceneName(std::size_t const i) const { return VCX::Labs::Rendering::Content::SceneNames[std::size_t(_scenes[i])].c_str(); }
         Engine::Scene const & GetScene(std::size_t const i) const { return VCX::Labs::Rendering::Content::Scenes[std::size_t(_scenes[i])]; }
         void                  ResetSystem();
     };
-} // namespace VCX::Labs::FluidSimulation   
+} // namespace VCX::Labs::Fluid
