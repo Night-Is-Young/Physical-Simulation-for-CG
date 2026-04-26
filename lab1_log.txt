@@ -1,0 +1,349 @@
+commit d9946b445f169fa7870ec7dad80fa2ac19458877
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Fri Apr 3 11:36:54 2026 +0800
+
+    增加了各个场景的各种选项
+
+ src/VCX/Labs/1-RigidBody/CaseMultipleBox.cpp | 58 +++++++++++++++-------------
+ src/VCX/Labs/1-RigidBody/CaseMultipleBox.h   |  5 ++-
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.h  |  2 +-
+ src/VCX/Labs/1-RigidBody/CaseTwoBox.cpp      |  4 +-
+ src/VCX/Labs/1-RigidBody/CaseTwoBox.h        |  2 +-
+ 5 files changed, 40 insertions(+), 31 deletions(-)
+
+commit c89813a724e24c13bb144878b0f0ca3bcfa83ece
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Fri Apr 3 11:16:21 2026 +0800
+
+    增加了牛顿摆场景同时拉起两边小球的选项，增加了碰撞解算的次数以提高稳定性
+
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.cpp | 18 ++++++++++++------
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.h   |  6 ++++--
+ src/VCX/Labs/1-RigidBody/CradleSimulator.h    |  4 ++--
+ 3 files changed, 18 insertions(+), 10 deletions(-)
+
+commit ab33da6279a0fd1b0e4a977795c2f40239df02bf
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Fri Apr 3 10:47:25 2026 +0800
+
+    优化了牛顿摆场景的稳定性，同时增加了调控小球数目的选项
+
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.cpp |  8 ++--
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.h   |  4 +-
+ src/VCX/Labs/1-RigidBody/CradleSimulator.h    | 62 +++++++++++++++------------
+ 3 files changed, 41 insertions(+), 33 deletions(-)
+
+commit 1c9e40d6ea5a35d9b25215bdb4b9b9200b0d0b56
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Thu Apr 2 18:38:56 2026 +0800
+
+    初步完成牛顿摆场景的编写
+
+ assets/scenes/rigid_body/newton_cradle.yaml |  4 +-
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.h |  2 +-
+ src/VCX/Labs/1-RigidBody/CradleSimulator.h  | 61 +++++++++++++++++++++++++++++
+ 3 files changed, 64 insertions(+), 3 deletions(-)
+
+commit 0f3393a314b9b0669e10244ae54fcce2486ad6e3
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Thu Apr 2 16:40:04 2026 +0800
+
+    完成单摆模型的编写
+
+ assets/scenes/rigid_body/newton_cradle.yaml   |  4 +-
+ src/VCX/Labs/1-RigidBody/Ball.h               | 24 +++++++++
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.cpp | 75 +++++++--------------------
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.h   | 17 +++---
+ src/VCX/Labs/1-RigidBody/CradleSimulator.h    | 25 ++++-----
+ 5 files changed, 66 insertions(+), 79 deletions(-)
+
+commit cef26ad47ff9f8f2d88af91918bf82e68e73f93e
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Thu Apr 2 16:01:40 2026 +0800
+
+    完成牛顿摆代码框架的移植以及场景配置newton_cradle.yaml的编写
+
+ assets/scenes/rigid_body/newton_cradle.yaml         | 21 +++++++++++++++++++++
+ src/VCX/Assets/bundled.h                            |  2 ++
+ src/VCX/Labs/1-RigidBody/App.cpp                    |  2 +-
+ src/VCX/Labs/1-RigidBody/App.h                      | 10 +++++-----
+ .../{CaseFluid.cpp => CaseNewtonCradle.cpp}         | 12 ++++++------
+ .../1-RigidBody/{CaseFluid.h => CaseNewtonCradle.h} |  8 ++++----
+ .../{FluidSimulator.h => CradleSimulator.h}         |  0
+ 7 files changed, 39 insertions(+), 16 deletions(-)
+
+commit 9001492fef2df9d49f36ae8547f6fa1b37d9a942
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Thu Apr 2 15:40:07 2026 +0800
+
+    由于渲染球体失败,移植了流体模拟的场景
+
+ src/VCX/Labs/1-RigidBody/App.cpp                   |   3 +-
+ src/VCX/Labs/1-RigidBody/App.h                     |   5 +-
+ src/VCX/Labs/1-RigidBody/Ball.h                    |  46 -----
+ src/VCX/Labs/1-RigidBody/CaseFluid.cpp             | 140 +++++++++++++++
+ src/VCX/Labs/1-RigidBody/CaseFluid.h               |  59 +++++++
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.cpp      | 188 ---------------------
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.h        |  39 -----
+ src/VCX/Labs/1-RigidBody/FluidSimulator.h          |  25 +++
+ src/VCX/Labs/1-RigidBody/shaders/phong.frag        |  92 ++++++++++
+ src/VCX/Labs/1-RigidBody/shaders/sphere_phong.vert |  36 ++++
+ xmake.lua                                          |   1 +
+ 11 files changed, 359 insertions(+), 275 deletions(-)
+
+commit f1607dbd400e4a30a94c15d1418631be210a5706
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Thu Apr 2 13:32:44 2026 +0800
+
+    初步完成牛顿摆场景的框架编写，准备测试球体渲染
+
+ src/VCX/Labs/1-RigidBody/Ball.h               |  46 +++++++
+ src/VCX/Labs/1-RigidBody/CaseMultipleBox.cpp  |  25 +++-
+ src/VCX/Labs/1-RigidBody/CaseMultipleBox.h    |   7 +-
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.cpp | 188 ++++++++++++++++++++++++++
+ src/VCX/Labs/1-RigidBody/CaseNewtonCradle.h   |  39 ++++++
+ 5 files changed, 295 insertions(+), 10 deletions(-)
+
+commit c0d0587c6524f57914878f091e762bc3e95cfa35
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Tue Mar 31 15:14:48 2026 +0800
+
+    初步完成多Box场景(包含墙壁)的模拟
+
+ src/VCX/Labs/1-RigidBody/App.h                     |  10 +-
+ src/VCX/Labs/1-RigidBody/Box.h                     |   2 +-
+ src/VCX/Labs/1-RigidBody/CaseMultipleBox.cpp       | 262 +++++++++++++++++++++
+ .../{CaseMutipleBox.h => CaseMultipleBox.h}        |   6 +-
+ src/VCX/Labs/1-RigidBody/CaseMutipleBox.cpp        | 188 ---------------
+ src/VCX/Labs/1-RigidBody/Wall.h                    |   4 +-
+ 6 files changed, 274 insertions(+), 198 deletions(-)
+
+commit 626f4afd528272342bd88f91dd5d13c1e7101e62
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Tue Mar 31 14:11:29 2026 +0800
+
+    初步完成多Box场景头文件CaseMutipleBox.h的编写
+
+ src/VCX/Labs/1-RigidBody/CaseMutipleBox.cpp | 188 ++++++++++++++++++++++++++++
+ src/VCX/Labs/1-RigidBody/CaseMutipleBox.h   |  43 +++++++
+ src/VCX/Labs/1-RigidBody/CaseTwoBox.h       |   2 +-
+ src/VCX/Labs/1-RigidBody/Wall.h             |  67 ++++------
+ 4 files changed, 256 insertions(+), 44 deletions(-)
+
+commit f8d377913f8fb9c71294d0acceac9e2891598df0
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Tue Mar 31 14:02:44 2026 +0800
+
+    初步完成墙壁类型头文件Wall.h的编写
+
+ src/VCX/Labs/1-RigidBody/Wall.h | 65 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 65 insertions(+)
+
+commit 7b64e42d21a7ca3f09117607fb2430762ebf5296
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Tue Mar 31 13:53:39 2026 +0800
+
+    初步完成墙壁类型头文件Wall.h的编写
+
+ src/VCX/Labs/1-RigidBody/Box.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit d446f7bb0df86c2cca47c8409645309605bc07f3
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Tue Mar 31 13:45:53 2026 +0800
+
+    完成两个Box相撞场景的模拟
+
+ src/VCX/Labs/1-RigidBody/Box.h          | 20 ++++++++++----------
+ src/VCX/Labs/1-RigidBody/CaseTwoBox.cpp |  1 -
+ 2 files changed, 10 insertions(+), 11 deletions(-)
+
+commit 34498dda6374c2c7443f5e3d8b669ed2288f201c
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Tue Mar 31 10:04:42 2026 +0800
+
+    auto commit (2026-03-31 10:04:42)
+
+ src/VCX/Labs/1-RigidBody/Box.h          | 2 +-
+ src/VCX/Labs/1-RigidBody/CaseTwoBox.cpp | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+commit 36a924aec5583ea7f7786399e2202661dae6b127
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Mon Mar 30 14:36:37 2026 +0800
+
+    完成两个Box相碰的实现
+
+ src/VCX/Labs/1-RigidBody/App.h           |   7 +-
+ src/VCX/Labs/1-RigidBody/Box.h           |  13 +-
+ src/VCX/Labs/1-RigidBody/CaseSingleBox.h |   2 +-
+ src/VCX/Labs/1-RigidBody/CaseTwoBox.cpp  | 212 ++++++++++++++++++-------------
+ src/VCX/Labs/1-RigidBody/CaseTwoBox.h    |  28 ++--
+ 5 files changed, 153 insertions(+), 109 deletions(-)
+
+commit 5f5c228e7276bc99eb412ad9cb874d0ed2edfb4c
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Mon Mar 30 12:59:22 2026 +0800
+
+    完成Box类型头文件Box.h的初步编写
+
+ src/VCX/Labs/1-RigidBody/Box.h          |  60 +++++++++++++
+ src/VCX/Labs/1-RigidBody/CaseTwoBox.cpp | 146 ++++++++++++++++++++++++++++++++
+ src/VCX/Labs/1-RigidBody/CaseTwoBox.h   |  45 ++++++++++
+ 3 files changed, 251 insertions(+)
+
+commit 2c65a5d20954df5396835032087ed4699cdbe44e
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Mon Mar 30 12:46:55 2026 +0800
+
+    调试完成单个物体角速度的模拟
+
+ src/VCX/Labs/1-RigidBody/CaseSingleBox.cpp | 30 +++++++++---------------------
+ 1 file changed, 9 insertions(+), 21 deletions(-)
+
+commit f6ae80cb4cc5aa1807cf071afddbee0e0e8bca41
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Mon Mar 30 12:31:28 2026 +0800
+
+    初步完成单个物体的模拟
+
+ src/VCX/Labs/1-RigidBody/CaseSingleBox.cpp | 83 +++++++++++++++++++++++++-----
+ src/VCX/Labs/1-RigidBody/CaseSingleBox.h   | 10 ++++
+ 2 files changed, 79 insertions(+), 14 deletions(-)
+
+commit 568a226f16c62e60aeb45749ffdceb7b3b6a62e7
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Sun Mar 29 15:12:10 2026 +0800
+
+    lab1:完成SingleBox场景的构建
+
+ src/VCX/Labs/1-RigidBody/App.cpp                         |  7 +++----
+ src/VCX/Labs/1-RigidBody/App.h                           | 16 ++++------------
+ .../Labs/1-RigidBody/{CaseBox.cpp => CaseSingleBox.cpp}  | 14 +++++++-------
+ src/VCX/Labs/1-RigidBody/{CaseBox.h => CaseSingleBox.h}  |  8 ++++----
+ src/VCX/Labs/1-RigidBody/main.cpp                        |  6 +++---
+ 5 files changed, 21 insertions(+), 30 deletions(-)
+
+commit 0d7f889699300c4979f08c07f813ee2627f5a923
+Author: Night-Is-Young <trackers@tutamail.com>
+Date:   Sun Mar 29 11:28:39 2026 +0800
+
+    auto commit (2026-03-29 11:28:39)
+
+ lab1-RigidBody.md                    | 138 +++++++++++++++++++++++++++++++++++
+ src/VCX/Labs/1-RigidBody/App.cpp     |  14 ++++
+ src/VCX/Labs/1-RigidBody/App.h       |  33 +++++++++
+ src/VCX/Labs/1-RigidBody/CaseBox.cpp | 103 ++++++++++++++++++++++++++
+ src/VCX/Labs/1-RigidBody/CaseBox.h   |  35 +++++++++
+ src/VCX/Labs/1-RigidBody/main.cpp    |  12 ++-
+ 6 files changed, 333 insertions(+), 2 deletions(-)
+
+commit 583190cce1cb7df96ef21fe2a2474af2d2d56809
+Author: RachelChu <mchu@pku.edu.cn>
+Date:   Tue Mar 3 11:36:28 2026 +0800
+
+    code base
+
+ .clang-format                                    | 152 ++++
+ .gitignore                                       |  11 +
+ LICENSE                                          |  21 +
+ README.md                                        | 176 +++++
+ assets/fonts/Ubuntu.ttf                          | Bin 0 -> 279384 bytes
+ assets/fonts/UbuntuMono.ttf                      | Bin 0 -> 205748 bytes
+ assets/images/ground.jpg                         | Bin 0 -> 339354 bytes
+ assets/images/lab0-case1.png                     | Bin 0 -> 42293 bytes
+ assets/images/lab0-case2.png                     | Bin 0 -> 58986 bytes
+ assets/images/lab0-case3.png                     | Bin 0 -> 144187 bytes
+ assets/images/lab0-case4.png                     | Bin 0 -> 110155 bytes
+ assets/images/lab0-case5.png                     | Bin 0 -> 193874 bytes
+ assets/images/vcl-logo-16x16.png                 | Bin 0 -> 1985 bytes
+ assets/images/vcl-logo-256x256.png               | Bin 0 -> 4533 bytes
+ assets/images/vcl-logo-32x32.png                 | Bin 0 -> 2203 bytes
+ assets/images/vcl-logo-48x48.png                 | Bin 0 -> 2439 bytes
+ assets/scenes/fluid/fluid.yaml                   |  21 +
+ assets/shaders/flat.frag                         |  11 +
+ assets/shaders/flat.vert                         |  14 +
+ assets/shaders/fluid.frag                        |  77 ++
+ assets/shaders/fluid.vert                        |  36 +
+ assets/shaders/phong.frag                        |  92 +++
+ assets/shaders/sphere_phong.vert                 |  36 +
+ assets/shaders/triangle.frag                     |   9 +
+ assets/shaders/triangle.vert                     |  11 +
+ lab0-GettingStarted.md                           | 107 +++
+ src/3rdparty/imgui_impl_glfw.cpp                 | 663 +++++++++++++++++
+ src/3rdparty/imgui_impl_glfw.h                   |  46 ++
+ src/3rdparty/imgui_impl_opengl3.cpp              | 871 +++++++++++++++++++++++
+ src/3rdparty/imgui_impl_opengl3.h                |  55 ++
+ src/3rdparty/imgui_impl_opengl3_loader.h         | 786 ++++++++++++++++++++
+ src/3rdparty/scope.hpp                           | 574 +++++++++++++++
+ src/3rdparty/stb_image.cpp                       |   4 +
+ src/3rdparty/tiny_obj_loader.cpp                 |   4 +
+ src/VCX/Assets/bundled.h                         |  29 +
+ src/VCX/Engine/Async.hpp                         |  67 ++
+ src/VCX/Engine/Camera.hpp                        |  31 +
+ src/VCX/Engine/Formats.hpp                       | 136 ++++
+ src/VCX/Engine/GL/Frame.hpp                      | 178 +++++
+ src/VCX/Engine/GL/Program.cpp                    |  37 +
+ src/VCX/Engine/GL/Program.h                      |  36 +
+ src/VCX/Engine/GL/RenderItem.cpp                 |  70 ++
+ src/VCX/Engine/GL/RenderItem.h                   |  68 ++
+ src/VCX/Engine/GL/Sampler.hpp                    |  59 ++
+ src/VCX/Engine/GL/Shader.cpp                     |  57 ++
+ src/VCX/Engine/GL/Shader.h                       |  29 +
+ src/VCX/Engine/GL/Texture.hpp                    | 187 +++++
+ src/VCX/Engine/GL/UniformBlock.hpp               |  32 +
+ src/VCX/Engine/GL/VertexLayout.hpp               | 104 +++
+ src/VCX/Engine/GL/resource.hpp                   | 190 +++++
+ src/VCX/Engine/GL/uniform.hpp                    | 137 ++++
+ src/VCX/Engine/Scene.cpp                         |  14 +
+ src/VCX/Engine/Scene.h                           |  82 +++
+ src/VCX/Engine/Sphere.cpp                        |  54 ++
+ src/VCX/Engine/Sphere.h                          |  26 +
+ src/VCX/Engine/SurfaceMesh.cpp                   |  83 +++
+ src/VCX/Engine/SurfaceMesh.h                     |  40 ++
+ src/VCX/Engine/TextureND.hpp                     | 121 ++++
+ src/VCX/Engine/app.cpp                           | 212 ++++++
+ src/VCX/Engine/app.h                             |  69 ++
+ src/VCX/Engine/loader.cpp                        | 442 ++++++++++++
+ src/VCX/Engine/loader.h                          |  21 +
+ src/VCX/Engine/math.hpp                          |  30 +
+ src/VCX/Engine/prelude.hpp                       |  30 +
+ src/VCX/Engine/type.hpp                          |  41 ++
+ src/VCX/Examples/ImGui/main.cpp                  |  35 +
+ src/VCX/Examples/Triangle/main.cpp               |  72 ++
+ src/VCX/Labs/0-GettingStarted/App.cpp            |  14 +
+ src/VCX/Labs/0-GettingStarted/App.h              |  33 +
+ src/VCX/Labs/0-GettingStarted/CaseBox.cpp        | 103 +++
+ src/VCX/Labs/0-GettingStarted/CaseBox.h          |  35 +
+ src/VCX/Labs/0-GettingStarted/CaseFixed.cpp      |  85 +++
+ src/VCX/Labs/0-GettingStarted/CaseFixed.h        |  29 +
+ src/VCX/Labs/0-GettingStarted/CaseFluid.cpp      | 140 ++++
+ src/VCX/Labs/0-GettingStarted/CaseFluid.h        |  59 ++
+ src/VCX/Labs/0-GettingStarted/CaseMassSpring.cpp | 104 +++
+ src/VCX/Labs/0-GettingStarted/CaseMassSpring.h   |  40 ++
+ src/VCX/Labs/0-GettingStarted/CaseResizable.cpp  |  55 ++
+ src/VCX/Labs/0-GettingStarted/CaseResizable.h    |  28 +
+ src/VCX/Labs/0-GettingStarted/FluidSimulator.h   |  25 +
+ src/VCX/Labs/0-GettingStarted/MassSpringSystem.h | 110 +++
+ src/VCX/Labs/0-GettingStarted/main.cpp           |  13 +
+ src/VCX/Labs/1-RigidBody/main.cpp                |   5 +
+ src/VCX/Labs/2-FluidSimulation/FluidSimulator.h  | 169 +++++
+ src/VCX/Labs/2-FluidSimulation/main.cpp          |   5 +
+ src/VCX/Labs/3-FEM/main.cpp                      |   5 +
+ src/VCX/Labs/Common/FlyCameraManager.cpp         | 131 ++++
+ src/VCX/Labs/Common/FlyCameraManager.h           |  66 ++
+ src/VCX/Labs/Common/ICase.h                      |  29 +
+ src/VCX/Labs/Common/ImGuiHelper.cpp              |  76 ++
+ src/VCX/Labs/Common/ImGuiHelper.h                |  26 +
+ src/VCX/Labs/Common/ImageRGB.cpp                 |  42 ++
+ src/VCX/Labs/Common/ImageRGB.h                   |  13 +
+ src/VCX/Labs/Common/OrbitCameraManager.cpp       | 193 +++++
+ src/VCX/Labs/Common/OrbitCameraManager.h         |  74 ++
+ src/VCX/Labs/Common/UI.cpp                       | 326 +++++++++
+ src/VCX/Labs/Common/UI.h                         |  68 ++
+ src/VCX/Labs/Scene/Content.cpp                   |  76 ++
+ src/VCX/Labs/Scene/Content.h                     |  12 +
+ src/VCX/Labs/Scene/SceneObject.cpp               | 157 ++++
+ src/VCX/Labs/Scene/SceneObject.h                 |  77 ++
+ xmake.lua                                        | 140 ++++
+ 102 files changed, 9159 insertions(+)
