@@ -15,7 +15,7 @@ namespace VCX::Labs::Fluid {
         std::vector<glm::vec3> m_particleVel; // Particle Velocity
         std::vector<glm::vec3> m_particleColor;
 
-        float m_fRatio = 0.95;
+        float m_fRatio = 0.95f;
         int   m_iCellX;
         int   m_iCellY;
         int   m_iCellZ;
@@ -25,6 +25,9 @@ namespace VCX::Labs::Fluid {
 
         int   m_iNumSpheres;
         float m_particleRadius;
+
+        float xmin = -0.5f, ymin = -0.5f, zmin = -0.5f;
+        float xmax = 0.5f, ymax = 0.5f, zmax = 0.5f;
 
         std::vector<glm::vec3> m_vel;
         std::vector<glm::vec3> m_pre_vel;
@@ -41,6 +44,10 @@ namespace VCX::Labs::Fluid {
                                               // m_type = EMPTY_CELL if has No particle and m_s == 1;
         std::vector<float> m_particleDensity; // Particle Density per cell, saved in the grid cell
         float              m_particleRestDensity;
+        float              ko = 0.1f; // stiffness constant
+        float              dt = 0.02f;
+        bool               compensateDrift = true; // whether to compensate for particle drift during pressure projection
+        glm::vec3          obstaclePos, obstacleVel;
 
         glm::vec3 gravity { 0, -9.81f, 0 };
 
@@ -49,11 +56,24 @@ namespace VCX::Labs::Fluid {
         void handleParticleCollisions(glm::vec3 obstaclePos, float obstacleRadius, glm::vec3 obstacleVel);
         void updateParticleDensity();
 
+        void buildHashTable();
+
         void        transferVelocities(bool toGrid, float flipRatio);
         void        solveIncompressibility(int numIters, float dt, float overRelaxation, bool compensateDrift);
         void        updateParticleColors();
         inline bool isValidVelocity(int i, int j, int k, int dir);
         inline int  index2GridOffset(glm::ivec3 index);
+        
+        inline int  Flattening(int i, int j, int k) { 
+            return i * m_iCellY * m_iCellZ + j * m_iCellZ + k;
+        }
+        
+        inline glm::ivec3 posToGridIndex(const glm::vec3 & pos) {
+            return glm::ivec3(
+                static_cast<int>((pos.x - xmin) / m_h),
+                static_cast<int>((pos.y - ymin) / m_h),
+                static_cast<int>((pos.z - zmin) / m_h));
+        }
 
         void SimulateTimestep(float const dt) {
             int   numSubSteps       = 1;
@@ -82,8 +102,6 @@ namespace VCX::Labs::Fluid {
             }
             updateParticleColors();
         }
-
-
 
         void setupScene(int res) {
             glm::vec3 tank(1.0f);

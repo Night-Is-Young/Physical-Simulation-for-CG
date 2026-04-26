@@ -154,4 +154,197 @@ void Simulator::updateParticleDensity() {
     }
 }
 
+void Simulator::transferVelocities(bool toGrid, float flipRatio) {
+    const int n = m_iCellY * m_iCellZ;
+    const int m = m_iCellZ;
+    if (toGrid) {
+        std::vector<glm::vec3> m_momentum; // 网格动量
+        std::vector<float>     m_mass;     // 网格质量
+        m_momentum.clear();
+        m_momentum.resize(m_iNumCells, glm::vec3(0.0f));
+        m_mass.clear();
+        m_mass.resize(m_iNumCells, 0.0f);
+
+        auto P2G = [&](int i, int j, int k, float Dx, float Dy, float Dz, int p, int mode) {
+            const float w[8] = {
+                (1 - Dx) * (1 - Dy) * (1 - Dz),
+                (1 - Dx) * (1 - Dy) * Dz,
+                (1 - Dx) * Dy * (1 - Dz),
+                (1 - Dx) * Dy * Dz,
+                Dx * (1 - Dy) * (1 - Dz),
+                Dx * (1 - Dy) * Dz,
+                Dx * Dy * (1 - Dz),
+                Dx * Dy * Dz
+            };
+            const int di[8] = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            const int dj[8] = { 0, 0, 1, 1, 0, 0, 1, 1 };
+            const int dk[8] = { 0, 1, 0, 1, 0, 1, 0, 1 };
+
+            for (int idx = 0; idx < 8; idx++) {
+                int index = (i + di[idx]) * n + (j + dj[idx]) * m + (k + dk[idx]);
+                m_mass[index] += w[idx];
+
+                if (mode == 0) {
+                    m_momentum[index].x += w[idx] * m_particleVel[p].x;
+                } else if (mode == 1) {
+                    m_momentum[index].y += w[idx] * m_particleVel[p].y;
+                } else {
+                    m_momentum[index].z += w[idx] * m_particleVel[p].z;
+                }
+            }
+        };
+
+        for (int p { 0 }; p < m_iNumSpheres; p++) { // 遍历particles
+            float xp0      = m_particlePos[p].x - xmin;
+            float yp0      = m_particlePos[p].y - xmin;
+            float zp0      = m_particlePos[p].z - zmin;
+            float xp0_half = xp0 - m_h / 2;
+            float yp0_half = yp0 - m_h / 2;
+            float zp0_half = zp0 - m_h / 2;
+
+            int i      = static_cast<int>(xp0 / m_h);
+            int j      = static_cast<int>(yp0 / m_h);
+            int k      = static_cast<int>(zp0 / m_h);
+            int i_half = static_cast<int>(xp0_half / m_h);
+            int j_half = static_cast<int>(yp0_half / m_h);
+            int k_half = static_cast<int>(zp0_half / m_h);
+
+            float Dx      = xp0 - i * m_h;
+            float Dy      = yp0 - j * m_h;
+            float Dz      = zp0 - k * m_h;
+            float Dx_half = xp0_half - i_half * m_h;
+            float Dy_half = yp0_half - j_half * m_h;
+            float Dz_half = zp0_half - k_half * m_h;
+
+            P2G(i, j_half, k_half, Dx, Dy_half, Dz_half, p, 0); // uVel
+            P2G(i_half, j, k_half, Dx_half, Dy, Dz_half, p, 1); // vVel
+            P2G(i_half, j_half, k, Dx_half, Dy_half, Dz, p, 2); // wVel
+        }
+
+        for (int i { 0 }; i < m_iCellX; i++) {
+            for (int j { 0 }; j < m_iCellY; j++) {
+                for (int k { 0 }; k < m_iCellZ; k++) { // update m_vel and label m_type
+                    int index = i * n + j * m + k;
+                    if (i == 0 || i >= m_iCellX - 2 || j == 0 || j >= m_iCellY - 2 || k == 0 || k >= m_iCellZ - 2) { // 边界
+                        m_type[index] = 2;                                                                           // solid
+                        m_vel[index]  = glm::vec3(0.0f);
+                    } else {
+                        if (m_mass[index] > 0.0f) { // has liquid
+                            m_type[index] = 1;
+                            m_vel[index]  = m_momentum[index] / m_mass[index];
+                        } else { // air
+                            m_type[index] = 0;
+                            m_vel[index]  = glm::vec3(0.0f);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        std::vector<glm::vec3> m_PicMomentum;
+        std::vector<float>     m_particleMass;
+        std::vector<glm::vec3> m_FlipDeltaMomentum;
+        m_PicMomentum.clear();
+        m_PicMomentum.resize(m_iNumSpheres, glm::vec3(0.0f));
+        m_particleMass.clear();
+        m_particleMass.resize(m_iNumSpheres, 0.0f);
+        m_FlipDeltaMomentum.clear();
+        m_FlipDeltaMomentum.resize(m_iNumSpheres, glm::vec3(0.0f));
+
+        auto G2P = [&](int i, int j, int k, float Dx, float Dy, float Dz, int p, int mode) {
+            const float w[8] = {
+                (1 - Dx) * (1 - Dy) * (1 - Dz),
+                (1 - Dx) * (1 - Dy) * Dz,
+                (1 - Dx) * Dy * (1 - Dz),
+                (1 - Dx) * Dy * Dz,
+                Dx * (1 - Dy) * (1 - Dz),
+                Dx * (1 - Dy) * Dz,
+                Dx * Dy * (1 - Dz),
+                Dx * Dy * Dz
+            };
+            const int di[8] = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            const int dj[8] = { 0, 0, 1, 1, 0, 0, 1, 1 };
+            const int dk[8] = { 0, 1, 0, 1, 0, 1, 0, 1 };
+
+            for (int idx = 0; idx < 8; idx++) {
+                int index = (i + di[idx]) * n + (j + dj[idx]) * m + (k + dk[idx]);
+                m_particleMass[p] += w[idx];
+
+                if (mode == 0) {
+                    m_PicMomentum[p].x += w[idx] * m_vel[index].x;
+                    m_FlipDeltaMomentum[p].x += w[idx] * (m_vel[index].x - m_pre_vel[index].x);
+                } else if (mode == 1) {
+                    m_PicMomentum[p].y += w[idx] * m_vel[index].y;
+                    m_FlipDeltaMomentum[p].y += w[idx] * (m_vel[index].y - m_pre_vel[index].y);
+                } else {
+                    m_PicMomentum[p].z += w[idx] * m_vel[index].z;
+                    m_FlipDeltaMomentum[p].z += w[idx] * (m_vel[index].z - m_pre_vel[index].z);
+                }
+            }
+        };
+
+        for (int p { 0 }; p < m_iNumSpheres; p++) {
+            float xp0      = m_particlePos[p].x - xmin;
+            float yp0      = m_particlePos[p].y - xmin;
+            float zp0      = m_particlePos[p].z - zmin;
+            float xp0_half = xp0 - m_h / 2;
+            float yp0_half = yp0 - m_h / 2;
+            float zp0_half = zp0 - m_h / 2;
+
+            int i      = static_cast<int>(xp0 / m_h);
+            int j      = static_cast<int>(yp0 / m_h);
+            int k      = static_cast<int>(zp0 / m_h);
+            int i_half = static_cast<int>(xp0_half / m_h);
+            int j_half = static_cast<int>(yp0_half / m_h);
+            int k_half = static_cast<int>(zp0_half / m_h);
+
+            float Dx      = xp0 - i * m_h;
+            float Dy      = yp0 - j * m_h;
+            float Dz      = zp0 - k * m_h;
+            float Dx_half = xp0_half - i_half * m_h;
+            float Dy_half = yp0_half - j_half * m_h;
+            float Dz_half = zp0_half - k_half * m_h;
+
+            G2P(i, j_half, k_half, Dx, Dy_half, Dz_half, p, 0);
+            G2P(i_half, j, k_half, Dx_half, Dy, Dz_half, p, 1);
+            G2P(i_half, j_half, k, Dx_half, Dy_half, Dz, p, 2);
+        }
+
+        for (int p { 0 }; p < m_iNumSpheres; p++) { // 更新 m_particleVel
+            m_particleVel[p] = (1 - flipRatio) * m_PicMomentum[p] / m_particleMass[p] + flipRatio * (m_particleVel[p] + m_FlipDeltaMomentum[p] / m_particleMass[p]);
+        }
+    }
+}
+
+void Simulator::solveIncompressibility(int numIters, float dt, float overRelaxation, bool compensateDrift) { // Gauss-Seidel
+    const int n = m_iCellY * m_iCellZ;
+    const int m = m_iCellZ;
+    m_pre_vel   = m_vel; // 复制一份 m_vel
+    for (int iter = 0; iter < numIters; iter++) {
+        for (int i = 0; i < m_iCellX; i++) {
+            for (int j = 0; j < m_iCellY; j++) {
+                for (int k = 0; k < m_iCellZ; k++) {
+                    const int index = i * n + j * m + k;
+                    if (m_type[index] == 1) {                                                                                                      // liquidus
+                        float d = m_vel[index + n].x - m_vel[index].x + m_vel[index + m].y - m_vel[index].y + m_vel[index + 1].z - m_vel[index].z; // 该网格的散度
+                        d *= overRelaxation;
+                        if (compensateDrift) {
+                            if (m_particleDensity[index] > m_particleRestDensity) {
+                                d -= ko * (m_particleDensity[index] - m_particleRestDensity);
+                            }
+                        }
+                        float s = m_s[index + n] + m_s[index - n] + m_s[index + m] + m_s[index - m] + m_s[index + 1] + m_s[index - 1];
+                        m_vel[index].x += d * m_s[index - n] / s;
+                        m_vel[index + n].x += -d * m_s[index + n] / s;
+                        m_vel[index].y += d * m_s[index - m] / s;
+                        m_vel[index + m].y += -d * m_s[index + m] / s;
+                        m_vel[index].z += d * m_s[index - 1] / s;
+                        m_vel[index + 1].z += -d * m_s[index + 1] / s;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void Simulator::updateParticleColors() {}
