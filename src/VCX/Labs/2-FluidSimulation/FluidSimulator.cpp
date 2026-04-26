@@ -76,4 +76,82 @@ void Simulator::pushParticlesApart(int numIters) {
     }
 }
 
+void Simulator::handleParticleCollisions(glm::vec3 obstaclePos, float obstacleRadius, glm::vec3 obstacleVel) {
+    for (int p = 0; p < m_iNumSpheres; p++) {
+        if (m_particlePos[p].x < xmin + m_h + m_particleRadius) {
+            m_particlePos[p].x = xmin + m_h + m_particleRadius;
+            m_particleVel[p].x = 0.0f;
+        }
+        if (m_particlePos[p].y < ymin + m_h + m_particleRadius) {
+            m_particlePos[p].y = ymin + m_h + m_particleRadius;
+            m_particleVel[p].y = 0.0f;
+        }
+        if (m_particlePos[p].z < zmin + m_h + m_particleRadius) {
+            m_particlePos[p].z = zmin + m_h + m_particleRadius;
+            m_particleVel[p].z = 0.0f;
+        }
+        if (m_particlePos[p].x > xmax - m_h - m_particleRadius) {
+            m_particlePos[p].x = xmax - m_h - m_particleRadius;
+            m_particleVel[p].x = 0.0f;
+        }
+        if (m_particlePos[p].y > ymax - m_h - m_particleRadius) {
+            m_particlePos[p].y = ymax - m_h - m_particleRadius;
+            m_particleVel[p].y = 0.0f;
+        }
+        if (m_particlePos[p].z > zmax - m_h - m_particleRadius) {
+            m_particlePos[p].z = zmax - m_h - m_particleRadius;
+            m_particleVel[p].z = 0.0f;
+        }
+        glm::vec3 d        = m_particlePos[p] - obstaclePos;
+        float     length_d = glm::length(d);
+        glm::vec3 n        = d / length_d;
+        if (length_d < obstacleRadius + m_particleRadius) {
+            glm::vec3 s = (obstacleRadius + m_particleRadius - length_d) * n;
+            m_particlePos[p] += s;
+        }
+    }
+}
+void Simulator::updateParticleDensity() {
+    m_particleDensity.clear();
+    m_particleDensity.resize(m_iNumCells, 0.0f);
+
+    int n = m_iCellY * m_iCellZ;
+    int m = m_iCellZ;
+    for (int p = 0; p < m_iNumSpheres; p++) {
+        float xp0      = m_particlePos[p].x - xmin;
+        float yp0      = m_particlePos[p].y - xmin;
+        float zp0      = m_particlePos[p].z - zmin;
+        float xp0_half = xp0 - m_h / 2;
+        float yp0_half = yp0 - m_h / 2;
+        float zp0_half = zp0 - m_h / 2;
+        int   i_half   = static_cast<int>(xp0_half / m_h);
+        int   j_half   = static_cast<int>(yp0_half / m_h);
+        int   k_half   = static_cast<int>(zp0_half / m_h);
+
+        float Dx = xp0_half - i_half * m_h;
+        float Dy = yp0_half - j_half * m_h;
+        float Dz = zp0_half - k_half * m_h;
+
+        const float w[8] = {
+            (1 - Dx) * (1 - Dy) * (1 - Dz),
+            (1 - Dx) * (1 - Dy) * Dz,
+            (1 - Dx) * Dy * (1 - Dz),
+            (1 - Dx) * Dy * Dz,
+            Dx * (1 - Dy) * (1 - Dz),
+            Dx * (1 - Dy) * Dz,
+            Dx * Dy * (1 - Dz),
+            Dx * Dy * Dz
+        };
+
+        const int di[8] = { 0, 0, 0, 0, 1, 1, 1, 1 };
+        const int dj[8] = { 0, 0, 1, 1, 0, 0, 1, 1 };
+        const int dk[8] = { 0, 1, 0, 1, 0, 1, 0, 1 };
+
+        for (int idx = 0; idx < 8; idx++) {
+            int index = (i_half + di[idx]) * n + (j_half + dj[idx]) * m + (k_half + dk[idx]);
+            m_particleDensity[index] += w[idx];
+        }
+    }
+}
+
 void Simulator::updateParticleColors() {}
