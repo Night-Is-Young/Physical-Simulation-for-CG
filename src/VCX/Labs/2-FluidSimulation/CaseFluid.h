@@ -49,7 +49,7 @@ namespace VCX::Labs::FluidSimulation {
         int                                 _res { 24 };
         float                               _r;
         int                                 numofSpheres;
-        Fluid::Simulator                    _simulation;
+        FluidSimulation::Simulator          _simulation;
         Engine::Model                       _obstacleSphere;
 
         char const *          GetSceneName(std::size_t const i) const { return VCX::Labs::Rendering::Content::SceneNames[std::size_t(_scenes[i])].c_str(); }

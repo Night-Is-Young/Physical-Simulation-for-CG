@@ -1,6 +1,6 @@
-#include "FluidSimulator.h"
+#include "Labs/2-FluidSimulation/FluidSimulator.h"
 
-using namespace VCX::Labs::Fluid;
+using namespace VCX::Labs::FluidSimulation;
 
 void Simulator::integrateParticles(float timeStep) {
     for (int i { 0 }; i < m_iNumSpheres; i++) {
@@ -59,12 +59,12 @@ void Simulator::pushParticlesApart(int numIters) {
 
                         for (int idx = start; idx < end; idx++) {
                             int pj = m_hashtable[idx];
-                            if (pi == pj) continue;
+                            if (pi <= pj) continue;
 
                             glm::vec3 d       = m_particlePos[pj] - m_particlePos[pi];
-                            float     lenth_d = glm::length(d);
-                            if (lenth_d < 2 * m_particleRadius) {
-                                glm::vec3 s = (2 * m_particleRadius - lenth_d) * (d / lenth_d);
+                            float     length_d = glm::length(d);
+                            if (length_d < 2 * m_particleRadius && length_d > 0.0001f) {
+                                glm::vec3 s = 0.5f * (2 * m_particleRadius - length_d) * (d / length_d);
                                 m_particlePos[pj] += s;
                                 m_particlePos[pi] -= s;
                             }
@@ -158,8 +158,8 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
     const int n = m_iCellY * m_iCellZ;
     const int m = m_iCellZ;
     if (toGrid) {
-        std::vector<glm::vec3> m_momentum; // 网格动量
-        std::vector<float>     m_mass;     // 网格质量
+        std::vector<glm::vec3> m_momentum;
+        std::vector<float>     m_mass;
         m_momentum.clear();
         m_momentum.resize(m_iNumCells, glm::vec3(0.0f));
         m_mass.clear();
@@ -225,8 +225,8 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
             for (int j { 0 }; j < m_iCellY; j++) {
                 for (int k { 0 }; k < m_iCellZ; k++) { // update m_vel and label m_type
                     int index = i * n + j * m + k;
-                    if (i == 0 || i >= m_iCellX - 2 || j == 0 || j >= m_iCellY - 2 || k == 0 || k >= m_iCellZ - 2) { // 边界
-                        m_type[index] = 2;                                                                           // solid
+                    if (i == 0 || i >= m_iCellX - 2 || j == 0 || j >= m_iCellY - 2 || k == 0 || k >= m_iCellZ - 2) {
+                        m_type[index] = 2;
                         m_vel[index]  = glm::vec3(0.0f);
                     } else {
                         if (m_mass[index] > 0.0f) { // has liquid
@@ -316,17 +316,17 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
     }
 }
 
-void Simulator::solveIncompressibility(int numIters, float dt, float overRelaxation, bool compensateDrift) { // Gauss-Seidel
+void Simulator::solveIncompressibility(int numIters, float dt, float overRelaxation, bool compensateDrift) {
     const int n = m_iCellY * m_iCellZ;
     const int m = m_iCellZ;
-    m_pre_vel   = m_vel; // 复制一份 m_vel
+    m_pre_vel   = m_vel;
     for (int iter = 0; iter < numIters; iter++) {
         for (int i = 0; i < m_iCellX; i++) {
             for (int j = 0; j < m_iCellY; j++) {
                 for (int k = 0; k < m_iCellZ; k++) {
                     const int index = i * n + j * m + k;
-                    if (m_type[index] == 1) {                                                                                                      // liquidus
-                        float d = m_vel[index + n].x - m_vel[index].x + m_vel[index + m].y - m_vel[index].y + m_vel[index + 1].z - m_vel[index].z; // 该网格的散度
+                    if (m_type[index] == 1) {
+                        float d = m_vel[index + n].x - m_vel[index].x + m_vel[index + m].y - m_vel[index].y + m_vel[index + 1].z - m_vel[index].z;
                         d *= overRelaxation;
                         if (compensateDrift) {
                             if (m_particleDensity[index] > m_particleRestDensity) {

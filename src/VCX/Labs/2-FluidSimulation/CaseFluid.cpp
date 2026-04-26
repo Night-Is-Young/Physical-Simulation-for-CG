@@ -1,8 +1,8 @@
-#include <spdlog/spdlog.h>
-#include "Engine/app.h"
 #include "Labs/2-FluidSimulation/CaseFluid.h"
+#include "Engine/app.h"
 #include "Labs/Common/ImGuiHelper.h"
 #include <iostream>
+#include <spdlog/spdlog.h>
 
 namespace VCX::Labs::FluidSimulation {
     const std::vector<glm::vec3> vertex_pos = {
@@ -33,7 +33,10 @@ namespace VCX::Labs::FluidSimulation {
         _lineprogram.GetUniforms().SetByName("u_Color", glm::vec3(1.0f));
         _BoundaryItem.UpdateElementBuffer(line_index);
         ResetSystem();
-        _sphere = Engine::Model { Engine::Sphere(6, _r), 0 };
+        _sphere = Engine::Model { Engine::Sphere(6, _simulation.m_particleRadius), 0 };
+
+        // 初始化障碍物球模型
+        _obstacleSphere = Engine::Model { Engine::Sphere(12, 0.2f), 0 };
     }
 
     void CaseFluid::OnSetupPropsUI() {
@@ -43,18 +46,33 @@ namespace VCX::Labs::FluidSimulation {
         if (ImGui::Button(_stopped ? "Start Simulation" : "Stop Simulation"))
             _stopped = ! _stopped;
         ImGui::Spacing();
-        // ImGui::SliderFloat("Mass", &_simulation.Mass, .5f, 5.f);
-        // ImGui::SliderFloat("Omega.", &_simulation.Omega, .1f, 1.f);
-        // ImGui::SliderFloat("Damp.", &_simulation.Damping, .1f, 1.f);
+        ImGui::Checkbox("Compensate Drift", &_simulation.compensateDrift);
+        ImGui::SameLine();
+        ImGui::TextDisabled("(?)");
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Enable/disable velocity drift compensation during FLIP-PIC blending.");
+        ImGui::SliderFloat("Rest Density", &_simulation.m_particleRestDensity, 0.0f, 10.0f, "%.2f");
+        ImGui::SliderFloat("Compensate Drift k", &_simulation.ko, 0.0f, 2.0f, "%.2f");
+        ImGui::Spacing();
+        ImGui::SliderFloat("FLIP Ratio", &_simulation.m_fRatio, 0.0f, 1.0f, "%.2f");
+        ImGui::SliderFloat("Time Step", &_simulation.dt, 0.001f, 0.05f, "%.3f");
     }
 
     Common::CaseRenderResult CaseFluid::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
+        static bool firstRender = true;
+        if (firstRender) {
+            firstRender            = false;
+            _sceneObject.Camera.Up = glm::vec3(0.0f, 0.0f, 1.0f); // 强制设置 Up
+            _cameraManager.Save(_sceneObject.Camera);
+        }
+
         if (_recompute) {
             _recompute = false;
             _sceneObject.ReplaceScene(GetScene(_sceneIdx));
             _cameraManager.Save(_sceneObject.Camera);
         }
-        if (! _stopped) _simulation.SimulateTimestep(Engine::GetDeltaTime());
+
+        if (! _stopped) _simulation.SimulateTimestep(_simulation.dt);
 
         _BoundaryItem.UpdateVertexBuffer("position", Engine::make_span_bytes<glm::vec3>(vertex_pos));
         _frame.Resize(desiredSize);
@@ -83,10 +101,34 @@ namespace VCX::Labs::FluidSimulation {
         _BoundaryItem.Draw({ _lineprogram.Use() });
         glLineWidth(1.f);
 
-        Rendering::ModelObject m        = Rendering::ModelObject(_sphere, _simulation.m_particlePos, _simulation.m_particleColor);
+        Rendering::ModelObject m        = Rendering::ModelObject(_sphere, _simulation.m_particlePos);
         auto const &           material = _sceneObject.Materials[0];
-        m.Mesh.Draw({ material.Albedo.Use(), material.MetaSpec.Use(), material.Height.Use(), _program.Use() }, _sphere.Mesh.Indices.size(), 0, numofSpheres);
+        m.Mesh.Draw({ material.Albedo.Use(), material.MetaSpec.Use(), material.Height.Use(), _program.Use() }, _sphere.Mesh.Indices.size(), 0, _simulation.m_iNumSpheres);
 
+        auto program = _program.Use();
+        _program.GetUniforms().SetByName("u_Projection", _sceneObject.Camera.GetProjectionMatrix((float(desiredSize.first) / desiredSize.second)));
+        _program.GetUniforms().SetByName("u_View", _sceneObject.Camera.GetViewMatrix());
+
+        _program.GetUniforms().SetByName("u_AmbientScale", 0.5f);
+        _program.GetUniforms().SetByName("u_Shininess", 32.0f);
+        _program.GetUniforms().SetByName("u_UseGammaCorrection", 1);
+        _program.GetUniforms().SetByName("u_AttenuationOrder", 2);
+        _program.GetUniforms().SetByName("u_BumpMappingBlend", 0.0f);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        _program.GetUniforms().SetByName("u_Color", glm::vec3(1.0f, 0.0f, 0.0f));
+
+        std::vector<glm::vec3> obstaclePositions = { _simulation.obstaclePos };
+        Rendering::ModelObject obstacleModel(_obstacleSphere, obstaclePositions);
+        auto const & material1 = _sceneObject.Materials[0];
+        obstacleModel.Mesh.Draw({ material1.Albedo.Use(), material1.MetaSpec.Use(), material1.Height.Use(), _program.Use() }, _obstacleSphere.Mesh.Indices.size(), 0,
+                                1);
         glDepthFunc(GL_LEQUAL);
         glDepthFunc(GL_LESS);
         glDisable(GL_DEPTH_TEST);
@@ -101,9 +143,30 @@ namespace VCX::Labs::FluidSimulation {
 
     void CaseFluid::OnProcessInput(ImVec2 const & pos) {
         _cameraManager.ProcessInput(_sceneObject.Camera, pos);
+        auto & io = ImGui::GetIO();
+        float     speed = 0.1f;
+        glm::vec3 move(0.0f);
+
+        if (io.KeysDown[ImGuiKey_UpArrow]) move.y += speed;
+        if (io.KeysDown[ImGuiKey_DownArrow]) move.y -= speed;
+        if (io.KeysDown[ImGuiKey_LeftArrow]) move.x -= speed;
+        if (io.KeysDown[ImGuiKey_RightArrow]) move.x += speed;
+        if (io.KeysDown[ImGuiKey_U]) move.z += speed;
+        if (io.KeysDown[ImGuiKey_D]) move.z -= speed;
+        _simulation.obstaclePos += move * io.DeltaTime;
+        _simulation.obstaclePos.x = glm::clamp(_simulation.obstaclePos.x, _simulation.xmin + _simulation.m_h, _simulation.xmax - _simulation.m_h);
+        _simulation.obstaclePos.y = glm::clamp(_simulation.obstaclePos.y, _simulation.ymin + _simulation.m_h, _simulation.ymax - _simulation.m_h);
+        _simulation.obstaclePos.z = glm::clamp(_simulation.obstaclePos.z, _simulation.zmin + _simulation.m_h, _simulation.zmax - _simulation.m_h);
+        _simulation.obstacleVel = move;
     }
 
     void CaseFluid::ResetSystem() {
         _simulation.setupScene(_res);
+
+        _sceneObject.Camera.Eye    = glm::vec3(0.0f, -2.0f, 1.0f);
+        _sceneObject.Camera.Target = glm::vec3(0.0f, 0.0f, 0.0f);
+        _sceneObject.Camera.Up     = glm::vec3(0.0f, 0.0f, 1.0f);
+        _sceneObject.Camera.Fovy   = 45.0f;
+        _cameraManager.Save(_sceneObject.Camera);
     }
 } // namespace VCX::Labs::FluidSimulation

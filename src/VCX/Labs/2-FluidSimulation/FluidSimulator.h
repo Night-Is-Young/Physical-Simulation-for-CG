@@ -9,7 +9,7 @@
 #include <vector>
 
 
-namespace VCX::Labs::Fluid {
+namespace VCX::Labs::FluidSimulation {
     struct Simulator {
         std::vector<glm::vec3> m_particlePos; // Particle m_particlePos
         std::vector<glm::vec3> m_particleVel; // Particle Velocity
@@ -43,7 +43,7 @@ namespace VCX::Labs::Fluid {
                                               // m_type = FLUID_CELL if has particle and m_s == 1;
                                               // m_type = EMPTY_CELL if has No particle and m_s == 1;
         std::vector<float> m_particleDensity; // Particle Density per cell, saved in the grid cell
-        float              m_particleRestDensity;
+        float              m_particleRestDensity = 4.7;
         float              ko = 0.1f; // stiffness constant
         float              dt = 0.02f;
         bool               compensateDrift = true; // whether to compensate for particle drift during pressure projection
@@ -76,14 +76,15 @@ namespace VCX::Labs::Fluid {
         }
 
         void SimulateTimestep(float const dt) {
-            int   numSubSteps       = 1;
-            int   numParticleIters  = 5;
+            int   numSubSteps       = 2;
+            int   numParticleIters  = 15;
             int   numPressureIters  = 30;
             bool  separateParticles = true;
-            float overRelaxation    = 0.5;
+            float overRelaxation    = 1.9;
             bool  compensateDrift   = true;
 
             float     flipRatio = m_fRatio;
+
             glm::vec3 obstaclePos(0.0f); // obstacle can be moved with mouse, as a user interaction
             glm::vec3 obstacleVel(0.0f);
 
@@ -91,10 +92,10 @@ namespace VCX::Labs::Fluid {
 
             for (int step = 0; step < numSubSteps; step++) {
                 integrateParticles(sdt);
-                handleParticleCollisions(obstaclePos, 0.0, obstacleVel);
+                handleParticleCollisions(obstaclePos, 0.2, obstacleVel);
                 if (separateParticles)
                     pushParticlesApart(numParticleIters);
-                handleParticleCollisions(obstaclePos, 0.0, obstacleVel);
+                handleParticleCollisions(obstaclePos, 0.2, obstacleVel);
                 transferVelocities(true, flipRatio);
                 updateParticleDensity();
                 solveIncompressibility(numPressureIters, sdt, overRelaxation, compensateDrift);
@@ -186,4 +187,4 @@ namespace VCX::Labs::Fluid {
             }
         }
     };
-} // namespace VCX::Labs::Fluid
+} // namespace VCX::Labs::FluidSimulation
