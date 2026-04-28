@@ -56,4 +56,4 @@ namespace VCX::Labs::FluidSimulation {
         Engine::Scene const & GetScene(std::size_t const i) const { return VCX::Labs::Rendering::Content::Scenes[std::size_t(_scenes[i])]; }
         void                  ResetSystem();
     };
-} // namespace VCX::Labs::Fluid
+} // namespace VCX::Labs::FluidSimulation

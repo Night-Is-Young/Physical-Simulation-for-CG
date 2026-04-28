@@ -159,11 +159,11 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
     const int m = m_iCellZ;
     if (toGrid) {
         std::vector<glm::vec3> m_momentum;
-        std::vector<float>     m_mass;
+        std::vector<glm::vec3> m_mass;
         m_momentum.clear();
         m_momentum.resize(m_iNumCells, glm::vec3(0.0f));
         m_mass.clear();
-        m_mass.resize(m_iNumCells, 0.0f);
+        m_mass.resize(m_iNumCells, glm::vec3(0.0f));
 
         auto P2G = [&](int i, int j, int k, float Dx, float Dy, float Dz, int p, int mode) {
             const float w[8] = {
@@ -182,13 +182,15 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
 
             for (int idx = 0; idx < 8; idx++) {
                 int index = (i + di[idx]) * n + (j + dj[idx]) * m + (k + dk[idx]);
-                m_mass[index] += w[idx];
 
                 if (mode == 0) {
+                    m_mass[index].x += w[idx];
                     m_momentum[index].x += w[idx] * m_particleVel[p].x;
                 } else if (mode == 1) {
+                    m_mass[index].y += w[idx];
                     m_momentum[index].y += w[idx] * m_particleVel[p].y;
                 } else {
+                    m_mass[index].z += w[idx];
                     m_momentum[index].z += w[idx] * m_particleVel[p].z;
                 }
             }
@@ -229,9 +231,11 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
                         m_type[index] = 2;
                         m_vel[index]  = glm::vec3(0.0f);
                     } else {
-                        if (m_mass[index] > 0.0f) { // has liquid
+                        if (m_mass[index].x > 0.0f || m_mass[index].y > 0.0f || m_mass[index].z > 0.0f) { // has liquid
                             m_type[index] = 1;
-                            m_vel[index]  = m_momentum[index] / m_mass[index];
+                            m_vel[index].x  = m_mass[index].x > 0.0f ? m_momentum[index].x / m_mass[index].x : 0.0f;
+                            m_vel[index].y  = m_mass[index].y > 0.0f ? m_momentum[index].y / m_mass[index].y : 0.0f;
+                            m_vel[index].z  = m_mass[index].z > 0.0f ? m_momentum[index].z / m_mass[index].z : 0.0f;
                         } else { // air
                             m_type[index] = 0;
                             m_vel[index]  = glm::vec3(0.0f);
@@ -242,12 +246,12 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
         }
     } else {
         std::vector<glm::vec3> m_PicMomentum;
-        std::vector<float>     m_particleMass;
+        std::vector<glm::vec3> m_particleMass;
         std::vector<glm::vec3> m_FlipDeltaMomentum;
         m_PicMomentum.clear();
         m_PicMomentum.resize(m_iNumSpheres, glm::vec3(0.0f));
         m_particleMass.clear();
-        m_particleMass.resize(m_iNumSpheres, 0.0f);
+        m_particleMass.resize(m_iNumSpheres, glm::vec3(0.0f));
         m_FlipDeltaMomentum.clear();
         m_FlipDeltaMomentum.resize(m_iNumSpheres, glm::vec3(0.0f));
 
@@ -268,15 +272,17 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
 
             for (int idx = 0; idx < 8; idx++) {
                 int index = (i + di[idx]) * n + (j + dj[idx]) * m + (k + dk[idx]);
-                m_particleMass[p] += w[idx];
 
                 if (mode == 0) {
+                    m_particleMass[p].x += w[idx];
                     m_PicMomentum[p].x += w[idx] * m_vel[index].x;
                     m_FlipDeltaMomentum[p].x += w[idx] * (m_vel[index].x - m_pre_vel[index].x);
                 } else if (mode == 1) {
+                    m_particleMass[p].y += w[idx];
                     m_PicMomentum[p].y += w[idx] * m_vel[index].y;
                     m_FlipDeltaMomentum[p].y += w[idx] * (m_vel[index].y - m_pre_vel[index].y);
                 } else {
+                    m_particleMass[p].z += w[idx];
                     m_PicMomentum[p].z += w[idx] * m_vel[index].z;
                     m_FlipDeltaMomentum[p].z += w[idx] * (m_vel[index].z - m_pre_vel[index].z);
                 }
@@ -334,6 +340,7 @@ void Simulator::solveIncompressibility(int numIters, float dt, float overRelaxat
                             }
                         }
                         float s = m_s[index + n] + m_s[index - n] + m_s[index + m] + m_s[index - m] + m_s[index + 1] + m_s[index - 1];
+                        if (s == 0.0f) continue;
                         m_vel[index].x += d * m_s[index - n] / s;
                         m_vel[index + n].x += -d * m_s[index + n] / s;
                         m_vel[index].y += d * m_s[index - m] / s;
