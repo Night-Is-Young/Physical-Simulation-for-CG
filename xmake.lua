@@ -124,6 +124,8 @@ target("lab2")
     add_packages("eigen")
     add_headerfiles("src/VCX/Labs/2-FluidSimulation/*.h")
     add_headerfiles("src/VCX/Labs/2-FluidSimulation/*.hpp")
+    add_headerfiles("src/VCX/Labs/2-FluidSimulation/shaders/*.vert")
+    add_headerfiles("src/VCX/Labs/2-FluidSimulation/shaders/*.frag")
     add_files      ("src/VCX/Labs/2-FluidSimulation/*.cpp")
     if is_plat("windows") then
         add_cxflags("/EHsc")

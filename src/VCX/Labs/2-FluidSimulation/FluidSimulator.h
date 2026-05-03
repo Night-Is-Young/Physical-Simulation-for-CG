@@ -19,6 +19,7 @@ namespace VCX::Labs::FluidSimulation {
         int   m_iCellX;
         int   m_iCellY;
         int   m_iCellZ;
+        int   strideX, strideY;
         float m_h;
         float m_fInvSpacing;
         int   m_iNumCells;
@@ -43,7 +44,7 @@ namespace VCX::Labs::FluidSimulation {
                                               // m_type = FLUID_CELL if has particle and m_s == 1;
                                               // m_type = EMPTY_CELL if has No particle and m_s == 1;
         std::vector<float> m_particleDensity; // Particle Density per cell, saved in the grid cell
-        float              m_particleRestDensity = 4.7;
+        float              m_particleRestDensity = 3.0f;
         float              ko = 0.1f; // stiffness constant
         float              dt = 0.01f;
         bool               compensateDrift = true; // whether to compensate for particle drift during pressure projection
@@ -61,8 +62,11 @@ namespace VCX::Labs::FluidSimulation {
         void        transferVelocities(bool toGrid, float flipRatio);
         void        solveIncompressibility(int numIters, float dt, float overRelaxation, bool compensateDrift);
         void        updateParticleColors();
-        inline bool isValidVelocity(int i, int j, int k, int dir);
-        inline int  index2GridOffset(glm::ivec3 index);
+
+        std::vector<float> TrilinearInterpolate(float Dx, float Dy, float Dz);
+        const int di[8] = { 0, 0, 0, 0, 1, 1, 1, 1 };
+        const int dj[8] = { 0, 0, 1, 1, 0, 0, 1, 1 };
+        const int dk[8] = { 0, 1, 0, 1, 0, 1, 0, 1 };
         
         inline int  Flattening(int i, int j, int k) { 
             return i * m_iCellY * m_iCellZ + j * m_iCellZ + k;
@@ -103,6 +107,10 @@ namespace VCX::Labs::FluidSimulation {
         void setupScene(int res) {
             glm::vec3 tank(1.0f);
             glm::vec3 relWater = { 0.6f, 0.8f, 0.6f };
+            obstaclePos = glm::vec3(
+                0.5f * (xmin + xmax),
+                0.5f * (ymin + ymax),
+                0.5f * (zmin + zmax));
 
             float _h      = tank.y / res;
             float point_r = 0.3 * _h;
@@ -119,6 +127,8 @@ namespace VCX::Labs::FluidSimulation {
             m_iCellX         = res + 1;
             m_iCellY         = res + 1;
             m_iCellZ         = res + 1;
+            strideX          = m_iCellY * m_iCellZ;
+            strideY          = m_iCellZ;
             m_h              = 1.0 / float(res);
             m_fInvSpacing    = float(res);
             m_iNumCells      = m_iCellX * m_iCellY * m_iCellZ;
@@ -165,16 +175,13 @@ namespace VCX::Labs::FluidSimulation {
                 }
             }
             // setup grid cells for tank
-            int n = m_iCellY * m_iCellZ;
-            int m = m_iCellZ;
-
             for (int i = 0; i < m_iCellX; i++) {
                 for (int j = 0; j < m_iCellY; j++) {
                     for (int k = 0; k < m_iCellZ; k++) {
                         float s = 1.0; // fluid
                         if (i == 0 || i >= m_iCellX - 2 || j == 0 || j >= m_iCellY - 2 || k == 0 || k >= m_iCellZ - 2)
                             s = 0.0f; // solid
-                        m_s[i * n + j * m + k] = s;
+                        m_s[i * strideX + j * strideY + k] = s;
                     }
                 }
             }

@@ -2,6 +2,19 @@
 
 using namespace VCX::Labs::FluidSimulation;
 
+std::vector<float> Simulator::TrilinearInterpolate(float Dx, float Dy, float Dz) {
+    return {
+        (1 - Dx) * (1 - Dy) * (1 - Dz),
+        (1 - Dx) * (1 - Dy) * Dz,
+        (1 - Dx) * Dy * (1 - Dz),
+        (1 - Dx) * Dy * Dz,
+        Dx * (1 - Dy) * (1 - Dz),
+        Dx * (1 - Dy) * Dz,
+        Dx * Dy * (1 - Dz),
+        Dx * Dy * Dz
+    };
+}
+
 void Simulator::integrateParticles(float timeStep) {
     for (int i { 0 }; i < m_iNumSpheres; i++) {
         m_particleVel[i] += timeStep * gravity;
@@ -11,16 +24,11 @@ void Simulator::integrateParticles(float timeStep) {
 
 void Simulator::buildHashTable() {
     m_hashtableindex.assign(m_iNumCells + 1, 0);
-
-    int n = m_iCellY * m_iCellZ;
-    int m = m_iCellZ;
-
     for (int p = 0; p < m_iNumSpheres; p++) {
         glm::ivec3 gridIdx = posToGridIndex(m_particlePos[p]);
-        int        index   = gridIdx.x * n + gridIdx.y * m + gridIdx.z;
+        int        index   = gridIdx.x * strideX + gridIdx.y * strideY + gridIdx.z;
         m_hashtableindex[index + 1]++;
     }
-
     for (int i = 1; i <= m_iNumCells; i++) {
         m_hashtableindex[i] += m_hashtableindex[i - 1];
     }
@@ -29,7 +37,7 @@ void Simulator::buildHashTable() {
     std::vector<int> count(m_iNumCells, 0);
     for (int p = 0; p < m_iNumSpheres; p++) {
         glm::ivec3 gridIdx  = posToGridIndex(m_particlePos[p]);
-        int        index    = gridIdx.x * n + gridIdx.y * m + gridIdx.z;
+        int        index    = gridIdx.x * strideX + gridIdx.y * strideY + gridIdx.z;
         int        offset   = m_hashtableindex[index] + count[index];
         m_hashtable[offset] = p;
         count[index]++;
@@ -39,21 +47,17 @@ void Simulator::buildHashTable() {
 void Simulator::pushParticlesApart(int numIters) {
     for (int iter = 0; iter < numIters; iter++) {
         buildHashTable();
-
         for (int pi = 0; pi < m_iNumSpheres; pi++) {
             glm::ivec3 gridIdx = posToGridIndex(m_particlePos[pi]);
-
             for (int di = -1; di <= 1; di++) {
                 for (int dj = -1; dj <= 1; dj++) {
                     for (int dk = -1; dk <= 1; dk++) {
                         int ni = gridIdx.x + di;
                         int nj = gridIdx.y + dj;
                         int nk = gridIdx.z + dk;
-
                         if (ni < 0 || ni >= m_iCellX || nj < 0 || nj >= m_iCellY || nk < 0 || nk >= m_iCellZ)
                             continue;
-
-                        int cellIdx = ni * m_iCellY * m_iCellZ + nj * m_iCellZ + nk;
+                        int cellIdx = ni * strideX + nj * strideY + nk;
                         int start   = m_hashtableindex[cellIdx];
                         int end     = m_hashtableindex[cellIdx + 1];
 
@@ -114,12 +118,9 @@ void Simulator::handleParticleCollisions(glm::vec3 obstaclePos, float obstacleRa
 void Simulator::updateParticleDensity() {
     m_particleDensity.clear();
     m_particleDensity.resize(m_iNumCells, 0.0f);
-
-    int n = m_iCellY * m_iCellZ;
-    int m = m_iCellZ;
     for (int p = 0; p < m_iNumSpheres; p++) {
         float xp0      = m_particlePos[p].x - xmin;
-        float yp0      = m_particlePos[p].y - xmin;
+        float yp0      = m_particlePos[p].y - ymin;
         float zp0      = m_particlePos[p].z - zmin;
         float xp0_half = xp0 - m_h / 2;
         float yp0_half = yp0 - m_h / 2;
@@ -132,31 +133,15 @@ void Simulator::updateParticleDensity() {
         float Dy = yp0_half - j_half * m_h;
         float Dz = zp0_half - k_half * m_h;
 
-        const float w[8] = {
-            (1 - Dx) * (1 - Dy) * (1 - Dz),
-            (1 - Dx) * (1 - Dy) * Dz,
-            (1 - Dx) * Dy * (1 - Dz),
-            (1 - Dx) * Dy * Dz,
-            Dx * (1 - Dy) * (1 - Dz),
-            Dx * (1 - Dy) * Dz,
-            Dx * Dy * (1 - Dz),
-            Dx * Dy * Dz
-        };
-
-        const int di[8] = { 0, 0, 0, 0, 1, 1, 1, 1 };
-        const int dj[8] = { 0, 0, 1, 1, 0, 0, 1, 1 };
-        const int dk[8] = { 0, 1, 0, 1, 0, 1, 0, 1 };
-
+        auto w = TrilinearInterpolate(Dx, Dy, Dz);
         for (int idx = 0; idx < 8; idx++) {
-            int index = (i_half + di[idx]) * n + (j_half + dj[idx]) * m + (k_half + dk[idx]);
+            int index = (i_half + di[idx]) * strideX + (j_half + dj[idx]) * strideY + (k_half + dk[idx]);
             m_particleDensity[index] += w[idx];
         }
     }
 }
 
 void Simulator::transferVelocities(bool toGrid, float flipRatio) {
-    const int n = m_iCellY * m_iCellZ;
-    const int m = m_iCellZ;
     if (toGrid) {
         std::vector<glm::vec3> m_momentum;
         std::vector<glm::vec3> m_mass;
@@ -166,23 +151,9 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
         m_mass.resize(m_iNumCells, glm::vec3(0.0f));
 
         auto P2G = [&](int i, int j, int k, float Dx, float Dy, float Dz, int p, int mode) {
-            const float w[8] = {
-                (1 - Dx) * (1 - Dy) * (1 - Dz),
-                (1 - Dx) * (1 - Dy) * Dz,
-                (1 - Dx) * Dy * (1 - Dz),
-                (1 - Dx) * Dy * Dz,
-                Dx * (1 - Dy) * (1 - Dz),
-                Dx * (1 - Dy) * Dz,
-                Dx * Dy * (1 - Dz),
-                Dx * Dy * Dz
-            };
-            const int di[8] = { 0, 0, 0, 0, 1, 1, 1, 1 };
-            const int dj[8] = { 0, 0, 1, 1, 0, 0, 1, 1 };
-            const int dk[8] = { 0, 1, 0, 1, 0, 1, 0, 1 };
-
+            auto w = TrilinearInterpolate(Dx, Dy, Dz);
             for (int idx = 0; idx < 8; idx++) {
-                int index = (i + di[idx]) * n + (j + dj[idx]) * m + (k + dk[idx]);
-
+                int index = (i + di[idx]) * strideX + (j + dj[idx]) * strideY + (k + dk[idx]);
                 if (mode == 0) {
                     m_mass[index].x += w[idx];
                     m_momentum[index].x += w[idx] * m_particleVel[p].x;
@@ -226,7 +197,7 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
         for (int i { 0 }; i < m_iCellX; i++) {
             for (int j { 0 }; j < m_iCellY; j++) {
                 for (int k { 0 }; k < m_iCellZ; k++) { // update m_vel and label m_type
-                    int index = i * n + j * m + k;
+                    int index = i * strideX + j * strideY + k;
                     if (i == 0 || i >= m_iCellX - 2 || j == 0 || j >= m_iCellY - 2 || k == 0 || k >= m_iCellZ - 2) {
                         m_type[index] = 2;
                         m_vel[index]  = glm::vec3(0.0f);
@@ -256,23 +227,9 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
         m_FlipDeltaMomentum.resize(m_iNumSpheres, glm::vec3(0.0f));
 
         auto G2P = [&](int i, int j, int k, float Dx, float Dy, float Dz, int p, int mode) {
-            const float w[8] = {
-                (1 - Dx) * (1 - Dy) * (1 - Dz),
-                (1 - Dx) * (1 - Dy) * Dz,
-                (1 - Dx) * Dy * (1 - Dz),
-                (1 - Dx) * Dy * Dz,
-                Dx * (1 - Dy) * (1 - Dz),
-                Dx * (1 - Dy) * Dz,
-                Dx * Dy * (1 - Dz),
-                Dx * Dy * Dz
-            };
-            const int di[8] = { 0, 0, 0, 0, 1, 1, 1, 1 };
-            const int dj[8] = { 0, 0, 1, 1, 0, 0, 1, 1 };
-            const int dk[8] = { 0, 1, 0, 1, 0, 1, 0, 1 };
-
+            auto w = TrilinearInterpolate(Dx, Dy, Dz);
             for (int idx = 0; idx < 8; idx++) {
-                int index = (i + di[idx]) * n + (j + dj[idx]) * m + (k + dk[idx]);
-
+                int index = (i + di[idx]) * strideX + (j + dj[idx]) * strideY + (k + dk[idx]);
                 if (mode == 0) {
                     m_particleMass[p].x += w[idx];
                     m_PicMomentum[p].x += w[idx] * m_vel[index].x;
@@ -339,12 +296,12 @@ void Simulator::solveIncompressibility(int numIters, float dt, float overRelaxat
                                 d -= ko * (m_particleDensity[index] - m_particleRestDensity);
                             }
                         }
-                        float s = m_s[index + n] + m_s[index - n] + m_s[index + m] + m_s[index - m] + m_s[index + 1] + m_s[index - 1];
+                        float s = m_s[index + strideX] + m_s[index - strideX] + m_s[index + strideY] + m_s[index - strideY] + m_s[index + 1] + m_s[index - 1];
                         if (s == 0.0f) continue;
-                        m_vel[index].x += d * m_s[index - n] / s;
-                        m_vel[index + n].x += -d * m_s[index + n] / s;
-                        m_vel[index].y += d * m_s[index - m] / s;
-                        m_vel[index + m].y += -d * m_s[index + m] / s;
+                        m_vel[index].x += d * m_s[index - strideX] / s;
+                        m_vel[index + strideX].x += -d * m_s[index + strideX] / s;
+                        m_vel[index].y += d * m_s[index - strideY] / s;
+                        m_vel[index + strideY].y += -d * m_s[index + strideY] / s;
                         m_vel[index].z += d * m_s[index - 1] / s;
                         m_vel[index + 1].z += -d * m_s[index + 1] / s;
                     }

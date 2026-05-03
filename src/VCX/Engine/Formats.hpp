@@ -14,6 +14,18 @@ namespace VCX::Engine {
     };
 
     namespace Formats {
+        struct R32F {
+            using Decoded = float;
+            using Encoded = float;
+
+            static Decoded Decode(Encoded const o) {
+                return o;
+            }
+
+            static Encoded Encode(Decoded const o) {
+                return o;
+            }
+        };
         struct R8 {
             using Decoded = float;
             using Encoded = unsigned char;
