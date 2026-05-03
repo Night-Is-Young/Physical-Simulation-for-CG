@@ -9,17 +9,13 @@ uniform float u_BlurDepthFalloff;
 out float o_Depth;
 
 void main() {
-    
     float depth = texture(u_DepthMap, v_TexCoord).r;
-    
     if (depth >= 1.0) { 
         o_Depth = 1.0; 
         return; 
     }
-
     float sum = 0.0;
     float wsum = 0.0;
-    
     int r = 10;
     for(int x = -r; x <= r; ++x) {
         for(int y = -r; y <= r; ++y) {
@@ -39,7 +35,6 @@ void main() {
             wsum += w;
         }
     }
-
     if (wsum > 0.0)
         o_Depth = sum / wsum;
     else

@@ -10,7 +10,7 @@
 
 namespace VCX::Labs::FluidSimulation {
 
-    using UniqueR16Frame = Engine::GL::UniqueFrame<Engine::GL::UniqueTexture2D, void, Engine::Formats::R32F>;
+    using UniqueR16Frame = Engine::GL::UniqueFrame<Engine::GL::UniqueTexture2D, void, Engine::Formats::R16>;
 
     class CaseRendering : public Common::ICase {
     public:
@@ -34,7 +34,7 @@ namespace VCX::Labs::FluidSimulation {
 
         Engine::GL::UniqueVertexArray           _emptyVAO;
 
-        Engine::Camera                          _camera        { .Eye = glm::vec3(0, 0, 3) };
+        Engine::Camera                          _camera        { .Eye = glm::vec3(0, 0, 2) };
         Common::OrbitCameraManager              _cameraManager;
         
         Engine::GL::UniqueRenderItem            _particlesItem;
@@ -49,7 +49,6 @@ namespace VCX::Labs::FluidSimulation {
         float _blurScale { 0.1f };
         float _blurDepthFalloff { 100.0f };
         int   _filterIterations { 20 };
-        float _minDensity { 0.0f };
 
         void ResetSystem();
     };

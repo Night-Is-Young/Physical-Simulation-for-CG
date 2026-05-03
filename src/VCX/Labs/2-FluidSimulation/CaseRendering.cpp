@@ -58,7 +58,7 @@ namespace VCX::Labs::FluidSimulation {
 
             _programDepth.GetUniforms().SetByName("u_Projection", _camera.GetProjectionMatrix((float(desiredSize.first) / desiredSize.second)));
             _programDepth.GetUniforms().SetByName("u_View", _camera.GetViewMatrix());
-            _programDepth.GetUniforms().SetByName("u_PointRadius", _simulation.m_particleRadius * 0.5f);
+            _programDepth.GetUniforms().SetByName("u_PointRadius", 0.05f * 0.5f);
             _programDepth.GetUniforms().SetByName("u_ScreenHeight", float(desiredSize.second));
 
             glEnable(GL_PROGRAM_POINT_SIZE);
@@ -141,10 +141,5 @@ namespace VCX::Labs::FluidSimulation {
 
     void CaseRendering::ResetSystem() {
         _simulation.setupScene(_res);
-        //_sceneObject.Camera.Eye    = glm::vec3(0.0f, -2.0f, 1.0f);
-        //_sceneObject.Camera.Target = glm::vec3(0.0f, 0.0f, 0.0f);
-        //_sceneObject.Camera.Up     = glm::vec3(0.0f, 0.0f, 1.0f);
-        //_sceneObject.Camera.Fovy   = 45.0f;
-        //_cameraManager.Save(_sceneObject.Camera);
     }
 } // namespace VCX::Labs::FluidSimulation
