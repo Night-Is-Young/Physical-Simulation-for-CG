@@ -34,8 +34,6 @@ namespace VCX::Labs::FluidSimulation {
         _BoundaryItem.UpdateElementBuffer(line_index);
         ResetSystem();
         _sphere = Engine::Model { Engine::Sphere(6, _simulation.m_particleRadius), 0 };
-
-        // 初始化障碍物球模型
         _obstacleSphere = Engine::Model { Engine::Sphere(12, 0.2f), 0 };
     }
 
@@ -47,10 +45,6 @@ namespace VCX::Labs::FluidSimulation {
             _stopped = ! _stopped;
         ImGui::Spacing();
         ImGui::Checkbox("Compensate Drift", &_simulation.compensateDrift);
-        ImGui::SameLine();
-        ImGui::TextDisabled("(?)");
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Enable/disable velocity drift compensation during FLIP-PIC blending.");
         ImGui::SliderFloat("Rest Density", &_simulation.m_particleRestDensity, 0.0f, 10.0f, "%.2f");
         ImGui::SliderFloat("Compensate Drift k", &_simulation.ko, 0.0f, 2.0f, "%.2f");
         ImGui::Spacing();
@@ -62,7 +56,7 @@ namespace VCX::Labs::FluidSimulation {
         static bool firstRender = true;
         if (firstRender) {
             firstRender            = false;
-            _sceneObject.Camera.Up = glm::vec3(0.0f, 0.0f, 1.0f); // 强制设置 Up
+            _sceneObject.Camera.Up = glm::vec3(0.0f, 0.0f, 1.0f);
             _cameraManager.Save(_sceneObject.Camera);
         }
 
@@ -105,25 +99,22 @@ namespace VCX::Labs::FluidSimulation {
         auto const &           material = _sceneObject.Materials[0];
         m.Mesh.Draw({ material.Albedo.Use(), material.MetaSpec.Use(), material.Height.Use(), _program.Use() }, _sphere.Mesh.Indices.size(), 0, _simulation.m_iNumSpheres);
 
+        // Render obstacle sphere
         auto program = _program.Use();
         _program.GetUniforms().SetByName("u_Projection", _sceneObject.Camera.GetProjectionMatrix((float(desiredSize.first) / desiredSize.second)));
         _program.GetUniforms().SetByName("u_View", _sceneObject.Camera.GetViewMatrix());
-
         _program.GetUniforms().SetByName("u_AmbientScale", 0.5f);
         _program.GetUniforms().SetByName("u_Shininess", 32.0f);
         _program.GetUniforms().SetByName("u_UseGammaCorrection", 1);
         _program.GetUniforms().SetByName("u_AttenuationOrder", 2);
         _program.GetUniforms().SetByName("u_BumpMappingBlend", 0.0f);
-
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, 0);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, 0);
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, 0);
-
         _program.GetUniforms().SetByName("u_Color", glm::vec3(1.0f, 0.0f, 0.0f));
-
         std::vector<glm::vec3> obstaclePositions = { _simulation.obstaclePos };
         Rendering::ModelObject obstacleModel(_obstacleSphere, obstaclePositions);
         auto const & material1 = _sceneObject.Materials[0];
@@ -146,7 +137,6 @@ namespace VCX::Labs::FluidSimulation {
         auto & io = ImGui::GetIO();
         float     speed = 0.1f;
         glm::vec3 move(0.0f);
-
         if (io.KeysDown[ImGuiKey_UpArrow]) move.y += speed;
         if (io.KeysDown[ImGuiKey_DownArrow]) move.y -= speed;
         if (io.KeysDown[ImGuiKey_LeftArrow]) move.x -= speed;

@@ -196,7 +196,7 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
             }
         };
 
-        for (int p { 0 }; p < m_iNumSpheres; p++) { // 遍历particles
+        for (int p { 0 }; p < m_iNumSpheres; p++) {
             float xp0      = m_particlePos[p].x - xmin;
             float yp0      = m_particlePos[p].y - xmin;
             float zp0      = m_particlePos[p].z - zmin;
@@ -316,7 +316,7 @@ void Simulator::transferVelocities(bool toGrid, float flipRatio) {
             G2P(i_half, j_half, k, Dx_half, Dy_half, Dz, p, 2);
         }
 
-        for (int p { 0 }; p < m_iNumSpheres; p++) { // 更新 m_particleVel
+        for (int p { 0 }; p < m_iNumSpheres; p++) {
             m_particleVel[p] = (1 - flipRatio) * m_PicMomentum[p] / m_particleMass[p] + flipRatio * (m_particleVel[p] + m_FlipDeltaMomentum[p] / m_particleMass[p]);
         }
     }

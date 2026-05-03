@@ -45,7 +45,7 @@ namespace VCX::Labs::FluidSimulation {
         std::vector<float> m_particleDensity; // Particle Density per cell, saved in the grid cell
         float              m_particleRestDensity = 4.7;
         float              ko = 0.1f; // stiffness constant
-        float              dt = 0.02f;
+        float              dt = 0.01f;
         bool               compensateDrift = true; // whether to compensate for particle drift during pressure projection
         glm::vec3          obstaclePos, obstacleVel;
 
@@ -84,10 +84,6 @@ namespace VCX::Labs::FluidSimulation {
             bool  compensateDrift   = true;
 
             float     flipRatio = m_fRatio;
-
-            glm::vec3 obstaclePos(0.0f); // obstacle can be moved with mouse, as a user interaction
-            glm::vec3 obstacleVel(0.0f);
-
             float sdt = dt / numSubSteps;
 
             for (int step = 0; step < numSubSteps; step++) {
@@ -158,9 +154,6 @@ namespace VCX::Labs::FluidSimulation {
             m_type.resize(m_iNumCells, 0);
             m_particleDensity.clear();
             m_particleDensity.resize(m_iNumCells, 0.0f);
-
-            // the rest density can be assigned after scene initialization
-            m_particleRestDensity = 0.0;
 
             // create particles
             int p = 0;
