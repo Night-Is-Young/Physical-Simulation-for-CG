@@ -3,18 +3,18 @@
 #include "Engine/GL/Frame.hpp"
 #include "Engine/GL/Program.h"
 #include "Engine/GL/RenderItem.h"
-#include "Labs/Fluid Simulation/SPHSystem3d.h"
+#include "Labs/2-FluidSimulation/FluidSimulator.h"
 #include "Labs/Common/OrbitCameraManager.h"
 #include "Labs/Common/ICase.h"
 #include "Labs/Common/ImageRGB.h"
 
-namespace VCX::Labs::Animation {
+namespace VCX::Labs::FluidSimulation {
 
     using UniqueR16Frame = Engine::GL::UniqueFrame<Engine::GL::UniqueTexture2D, void, Engine::Formats::R32F>;
 
-    class Case3dSPHRendering : public Common::ICase {
+    class CaseRendering : public Common::ICase {
     public:
-        Case3dSPHRendering();
+        CaseRendering();
 
         virtual std::string_view const GetName() override { return "Fluid Rendering"; }
         
@@ -41,8 +41,9 @@ namespace VCX::Labs::Animation {
 
         bool                                    _stopped       { false };
 
-        SPHParams3d _SPHParams;
-        SPHSystem3d _SPHSystem3d;   
+        int  _res { 24 };
+
+        FluidSimulation::Simulator _simulation;
 
         float _filterRadius { 10.0f };
         float _blurScale { 0.1f };

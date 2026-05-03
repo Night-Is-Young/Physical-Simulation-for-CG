@@ -1,10 +1,10 @@
-#include "Labs/Fluid Simulation/Case3dSPHRendering.h"
+#include "Labs/2-FluidSimulation/CaseRendering.h"
 #include "Engine/app.h"
 #include "Labs/Common/ImGuiHelper.h"
 #include <iostream>
 
-namespace VCX::Labs::Animation {
-    Case3dSPHRendering::Case3dSPHRendering():
+namespace VCX::Labs::FluidSimulation {
+    CaseRendering::CaseRendering():
         _programDepth(
             Engine::GL::UniqueProgram({ Engine::GL::SharedShader("assets/shaders/depth.vert"),
                                         Engine::GL::SharedShader("assets/shaders/depth.frag") })),
@@ -20,28 +20,28 @@ namespace VCX::Labs::Animation {
         ResetSystem();
     }
 
-    void Case3dSPHRendering::OnSetupPropsUI() {
-        if (ImGui::CollapsingHeader("Algorithm", ImGuiTreeNodeFlags_DefaultOpen)) {
-            if (ImGui::Button("Reset System")) ResetSystem();
-            ImGui::SameLine();
-            if (ImGui::Button(_stopped ? "Start Simulation" : "Stop Simulation")) _stopped = ! _stopped;
-            ImGui::SliderInt("Part. Num X", &_SPHParams.InitXNumber, 5, 20);
-            ImGui::SliderInt("Part. Num Y", &_SPHParams.InitYNumber, 5, 40);
-            ImGui::SliderInt("Part. Num Z", &_SPHParams.InitZNumber, 5, 20);
-            ImGui::SliderFloat("Min Render Density", &_minDensity, 0.0f, 2000.0f);
-        }
+    void CaseRendering::OnSetupPropsUI() {
+        if (ImGui::Button("Reset System"))
+            ResetSystem();
+        ImGui::SameLine();
+        if (ImGui::Button(_stopped ? "Start Simulation" : "Stop Simulation"))
+            _stopped = ! _stopped;
         ImGui::Spacing();
+        ImGui::Checkbox("Compensate Drift", &_simulation.compensateDrift);
+        ImGui::SliderFloat("Rest Density", &_simulation.m_particleRestDensity, 0.0f, 10.0f, "%.2f");
+        ImGui::SliderFloat("Compensate Drift k", &_simulation.ko, 0.0f, 2.0f, "%.2f");
+        ImGui::Spacing();
+        ImGui::SliderFloat("FLIP Ratio", &_simulation.m_fRatio, 0.0f, 1.0f, "%.2f");
+        ImGui::SliderFloat("Time Step", &_simulation.dt, 0.001f, 0.05f, "%.3f");
     }
 
-    Common::CaseRenderResult Case3dSPHRendering::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
-        if (! _stopped) _SPHSystem3d.Advance3dSPHSystem(_SPHParams);
+    Common::CaseRenderResult CaseRendering::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
+        if (! _stopped) _simulation.SimulateTimestep(_simulation.dt);
 
         std::vector<glm::vec3> positions;
-        positions.reserve(_SPHSystem3d.numFluidParticles);
-        for (int i = 0; i < _SPHSystem3d.numFluidParticles; ++i) {
-            if (_SPHSystem3d.densities[i] >= _minDensity) {
-                positions.push_back(_SPHSystem3d.positions[i]);
-            }
+        positions.reserve(_simulation.m_particlePos.size());
+        for (size_t i = 0; i < _simulation.m_particlePos.size(); ++i) {
+            positions.push_back(_simulation.m_particlePos[i]);
         }
         _particlesItem.UpdateVertexBuffer("position", Engine::make_span_bytes<glm::vec3>(positions));
         
@@ -58,7 +58,7 @@ namespace VCX::Labs::Animation {
 
             _programDepth.GetUniforms().SetByName("u_Projection", _camera.GetProjectionMatrix((float(desiredSize.first) / desiredSize.second)));
             _programDepth.GetUniforms().SetByName("u_View", _camera.GetViewMatrix());
-            _programDepth.GetUniforms().SetByName("u_PointRadius", _SPHParams.H * 0.5f);
+            _programDepth.GetUniforms().SetByName("u_PointRadius", _simulation.m_particleRadius * 0.5f);
             _programDepth.GetUniforms().SetByName("u_ScreenHeight", float(desiredSize.second));
 
             glEnable(GL_PROGRAM_POINT_SIZE);
@@ -135,64 +135,16 @@ namespace VCX::Labs::Animation {
         };
     }
 
-    void Case3dSPHRendering::OnProcessInput(ImVec2 const & pos) {
+    void CaseRendering::OnProcessInput(ImVec2 const & pos) {
         _cameraManager.ProcessInput(_camera, pos);
     }
 
-    void Case3dSPHRendering::ResetSystem() {
-        _SPHSystem3d = SPHSystem3d(_SPHParams);
-        _SPHSystem3d.positions.clear();
-        _SPHSystem3d.velocities.clear();
-
-        auto addParticle = [&](float x, float y, float z) {
-            _SPHSystem3d.positions.push_back(glm::vec3(x, y, z));
-            _SPHSystem3d.velocities.push_back(glm::vec3(0));
-        };
-
-        float step = _SPHParams.H * 0.75f;
-        for (int i = 0; i < _SPHParams.InitXNumber; ++i) {
-            for (int j = 0; j < _SPHParams.InitYNumber; ++j) {
-                for (int k = 0; k < _SPHParams.InitZNumber; ++k) {
-                    glm::vec3 pos = _SPHParams.InitPos;
-                    addParticle(pos.x + step * i, pos.y + step * j, pos.z + step * k);
-                }
-            }
-        }
-
-        _SPHSystem3d.numFluidParticles = _SPHSystem3d.positions.size();
-
-        float bx = _SPHParams.BoundaryX;
-        float by = _SPHParams.BoundaryY;
-        float bz = _SPHParams.BoundaryZ;
-
-        step         = _SPHParams.H * 0.5f;
-        int   layers = 0;
-        float margin = layers * step;
-
-        auto addBlock = [&](float x0, float x1, float y0, float y1, float z0, float z1) {
-            for (float x = x0; x <= x1 + 1e-5f; x += step) {
-                for (float y = y0; y <= y1 + 1e-5f; y += step) {
-                    for (float z = z0; z <= z1 + 1e-5f; z += step) {
-                        addParticle(x, y, z);
-                    }
-                }
-            }
-        };
-
-        // Floor and Ceiling (Full X, Full Z)
-        addBlock(-bx / 2 - margin, bx / 2 + margin, -by / 2 - margin, -by / 2, -bz / 2 - margin, bz / 2 + margin);
-
-        // Left and Right Walls (Inner Y, Full Z)
-        addBlock(-bx / 2 - margin, -bx / 2, -by / 2 + step, by / 2 - step, -bz / 2 - margin, bz / 2 + margin);
-        addBlock(bx / 2, bx / 2 + margin, -by / 2 + step, by / 2 - step, -bz / 2 - margin, bz / 2 + margin);
-
-        // Front and Back Walls (Inner Y, Inner X)
-        addBlock(-bx / 2 + step, bx / 2 - step, -by / 2 + step, by / 2 - step, -bz / 2 - margin, -bz / 2);
-        addBlock(-bx / 2 + step, bx / 2 - step, -by / 2 + step, by / 2 - step, bz / 2, bz / 2 + margin);
-
-        _SPHSystem3d.numTotalParticles = _SPHSystem3d.positions.size();
-        _SPHSystem3d.densities.assign(_SPHSystem3d.numTotalParticles, 0.0f);
-        _SPHSystem3d.pressures.assign(_SPHSystem3d.numTotalParticles, 0.0f);
-        _SPHSystem3d.forces.assign(_SPHSystem3d.numTotalParticles, glm::vec3(0.0f));
+    void CaseRendering::ResetSystem() {
+        _simulation.setupScene(_res);
+        //_sceneObject.Camera.Eye    = glm::vec3(0.0f, -2.0f, 1.0f);
+        //_sceneObject.Camera.Target = glm::vec3(0.0f, 0.0f, 0.0f);
+        //_sceneObject.Camera.Up     = glm::vec3(0.0f, 0.0f, 1.0f);
+        //_sceneObject.Camera.Fovy   = 45.0f;
+        //_cameraManager.Save(_sceneObject.Camera);
     }
-} // namespace VCX::Labs::Animation
+} // namespace VCX::Labs::FluidSimulation

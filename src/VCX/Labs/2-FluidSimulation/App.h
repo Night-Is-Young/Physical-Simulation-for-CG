@@ -4,6 +4,7 @@
 
 #include "Engine/app.h"
 #include "Labs/2-FluidSimulation/CaseFluid.h"
+#include "Labs/2-FluidSimulation/CaseRendering.h"
 #include "Labs/Common/UI.h"
 
 namespace VCX::Labs::FluidSimulation {
@@ -12,14 +13,14 @@ namespace VCX::Labs::FluidSimulation {
         Common::UI _ui;
 
         CaseFluid _CaseFluid;
+        CaseRendering _CaseRendering;
 
         std::size_t _caseId = 0;
 
-        std::vector<std::reference_wrapper<Common::ICase>> _cases = { _CaseFluid };
+        std::vector<std::reference_wrapper<Common::ICase>> _cases = { _CaseFluid, _CaseRendering };
 
     public:
         App();
-
         void OnFrame() override;
     };
 }
