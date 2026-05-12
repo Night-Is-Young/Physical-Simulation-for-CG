@@ -73,7 +73,6 @@ namespace VCX::Labs::FEM {
         for (int i = 0; i < nx; i++) {
             for (int j = 0; j < ny; j++) {
                 for (int k = 0; k < nz; k++) {
-                    // 获取当前立方体的8个顶点指针
                     Vertex * v000 = &_vertices[GetVertexIndex(i, j, k)];
                     Vertex * v001 = &_vertices[GetVertexIndex(i, j, k + 1)];
                     Vertex * v010 = &_vertices[GetVertexIndex(i, j + 1, k)];
@@ -83,7 +82,6 @@ namespace VCX::Labs::FEM {
                     Vertex * v110 = &_vertices[GetVertexIndex(i + 1, j + 1, k)];
                     Vertex * v111 = &_vertices[GetVertexIndex(i + 1, j + 1, k + 1)];
 
-                    // 将一个立方体分割为6个四面体（直接通过索引赋值）
                     _tetrahedra[TetId]          = Tetrahedron(TetId);
                     _tetrahedra[TetId]._vertices = { v000, v001, v011, v111 }; // Tet1
                     TetId++;
@@ -110,6 +108,7 @@ namespace VCX::Labs::FEM {
                 }
             }
         }
+
 
         for (auto & tet : _tetrahedra) {
             glm::mat3 E;
@@ -168,7 +167,6 @@ namespace VCX::Labs::FEM {
             }
         }
 
-        std::cout << "Initialized Tetrahedron System with " << verticesCnt << " vertices, " << tetrahedraCnt << " tetrahedra, " << _edges.size() << " edges, and " << _surfaceTriangles.size() << " surface triangles." << std::endl;
     }
 
     void TetrahedronSystem::AdvanceTetrahedronSystem(float dt) {

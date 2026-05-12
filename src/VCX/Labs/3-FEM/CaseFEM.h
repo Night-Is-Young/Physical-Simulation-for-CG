@@ -21,8 +21,8 @@ namespace VCX::Labs::FEM {
         virtual Common::CaseRenderResult OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) override;
         virtual void                     OnProcessInput(ImVec2 const & pos) override;
 
-        //void ProcessKeyInput(int key, int action);
-        //void UpdateArrow(const glm::vec3 & startPos, const glm::vec3 & direction, char type);
+        void ProcessKeyInput(int key, int action);
+        void UpdateArrow(const glm::vec3 & startPos, const glm::vec3 & direction, char type);
 
     private:
         Engine::GL::UniqueProgram           _program;
@@ -33,13 +33,15 @@ namespace VCX::Labs::FEM {
         Engine::GL::UniqueIndexedRenderItem _linesItem;
         Engine::GL::UniqueIndexedRenderItem _trianglesItem;
         TetrahedronSystem                   _tetsystem;
-        int                                 _rendermode { 2 }; // 0: surface; 1: edge; 2: vertex
         bool                                _stopped { false };
+        bool                                _showSurface { true };
+        bool                                _showEdges { true };
+        bool                                _showVertices { true };
         float                               _vertexSize { 5 };
-        float                               _lineWidth { 1 };
-        glm::vec4                           _vertexColor { 0.0f, 0.5f, 0.2f, 1.0f };
+        float                               _lineWidth { 2 };
+        glm::vec4                           _vertexColor { 0.1f, 0.1f, 0.9f, 1.0f };
         glm::vec4                           _lineColor { 1.0f, 1.0f, 1.0f, 1.0f };
-        glm::vec4                           _triangleColor { 0.5, 0.1f, 0.5f, 0.8f };
+        glm::vec4                           _triangleColor { 0.1f, 0.1f, 0.5f, 0.6f };
         std::vector<glm::vec3>              _wallPositions {
             glm::vec3(0.0f, -5.0f, -5.0f),
             glm::vec3(0.0f, 5.0f, -5.0f),
@@ -47,7 +49,7 @@ namespace VCX::Labs::FEM {
             glm::vec3(0.0f, -5.0f, 5.0f)
         };
         Engine::GL::UniqueIndexedRenderItem _wallItem;
-        float                               impulseMagnitude { 2.0f };
+        float                               impulseMagnitude { 5.0f };
 
         std::vector<glm::vec3>              _arrowVertices;
         Engine::GL::UniqueIndexedRenderItem _arrowItem;

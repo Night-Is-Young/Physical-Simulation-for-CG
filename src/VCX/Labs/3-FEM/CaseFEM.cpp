@@ -40,10 +40,21 @@ namespace VCX::Labs::FEM {
         }
         ImGui::Spacing();
 
+        if (ImGui::CollapsingHeader("Physics", ImGuiTreeNodeFlags_DefaultOpen)) {
+            if (ImGui::Button(_tetsystem._gravity_on ? "Gravity On" : "Gravity Off")) _tetsystem._gravity_on = ! _tetsystem._gravity_on;
+            ImGui::SameLine();
+            if (ImGui::Button(_tetsystem._friction_on ? "Friction On" : "Friction Off")) _tetsystem._friction_on = ! _tetsystem._friction_on;
+            ImGui::SliderFloat("Poisson's Ratio: ", &_tetsystem._nu, -1.0f, 0.5f, "%.2f");
+            ImGui::SliderFloat("Friction Coefficient:", &_tetsystem._friction_ratio, 0.95f, 1.0f, "%.4f");
+            ImGui::SliderFloat("Friction Coefficient:", &impulseMagnitude, 0.0f, 5.0f, "%.2f");
+
+        }
+        ImGui::Spacing();
+
         if (ImGui::CollapsingHeader("Appearance")) {
-            if (ImGui::Button("Render Surfaces")) _rendermode = 0;
-            if (ImGui::Button("Render Edgess")) _rendermode = 1;
-            if (ImGui::Button("Render Vertices")) _rendermode = 2;
+            if (ImGui::Button("Rendering Surface")) _showSurface = ! _showSurface;
+            if (ImGui::Button("Rendering Edges")) _showEdges = ! _showEdges;
+            if (ImGui::Button("Rendering Vertices")) _showVertices = ! _showVertices;
         }
     }
 
@@ -71,7 +82,7 @@ namespace VCX::Labs::FEM {
         _program.GetUniforms().SetByName("u_Color", glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
         _wallItem.Draw({ _program.Use() });
 
-        if (_rendermode == 0) {
+        if (_showSurface) {
             // rendering surfaces
             std::vector<glm::vec3> triVertexPositions;
             for (const auto tri : _tetsystem._surfaceTriangles) {
@@ -84,7 +95,7 @@ namespace VCX::Labs::FEM {
             _program.GetUniforms().SetByName("u_Color", _triangleColor);
             _trianglesItem.Draw({ _program.Use() });
         }
-        if (_rendermode == 1) {
+        if (_showEdges) {
             // redering edges
             std::vector<glm::vec3> lineVerticesPositions;
             for (const auto line : _tetsystem._edges) {
@@ -96,7 +107,7 @@ namespace VCX::Labs::FEM {
             _program.GetUniforms().SetByName("u_Color", _lineColor);
             _linesItem.Draw({ _program.Use() });
         }
-        if (_rendermode == 2) {
+        if (_showVertices) {
             // rendering vertices
             std::vector<glm::vec3> verticesPositions;
             std::vector<glm::vec4> verticesColors;
@@ -108,11 +119,6 @@ namespace VCX::Labs::FEM {
             _verticesItem.UpdateVertexBuffer("color", Engine::make_span_bytes<glm::vec4>(verticesColors));
             _program.GetUniforms().SetByName("useUniformColor", 0);
             _verticesItem.Draw({ _program.Use() });
-        }
-        if (_showArrow) {
-            _program.GetUniforms().SetByName("useUniformColor", 1);
-            _program.GetUniforms().SetByName("u_Color", glm::vec4(1.0f, 0.0f, 0.0f, 0.8f));
-            _arrowItem.Draw({ _program.Use() });
         }
 
         glLineWidth(1.f);
@@ -129,11 +135,71 @@ namespace VCX::Labs::FEM {
 
     void CaseFEM::OnProcessInput(ImVec2 const & pos) {
         _cameraManager.ProcessInput(_camera, pos);
+
+        if (ImGui::IsKeyPressed(ImGuiKey_1)) {
+            ProcessKeyInput(GLFW_KEY_1, GLFW_PRESS);
+        }
+        if (ImGui::IsKeyPressed(ImGuiKey_2)) {
+            ProcessKeyInput(GLFW_KEY_2, GLFW_PRESS);
+        }
+
+        if (ImGui::IsKeyPressed(ImGuiKey_3)) {
+            ProcessKeyInput(GLFW_KEY_3, GLFW_PRESS);
+        }
+
+        if (ImGui::IsKeyPressed(ImGuiKey_4)) {
+            ProcessKeyInput(GLFW_KEY_4, GLFW_PRESS);
+        }
+    }
+
+    void CaseFEM::ProcessKeyInput(int key, int action) {
+        if (action != GLFW_PRESS) return;
+
+        glm::vec3 impulse(0.0f);
+        glm::vec3 offset(0.0f);
+        glm::vec3 direction(1.0f, 0.0f, 0.0f);
+        char      type { 'x' };
+        switch (key) {
+        case GLFW_KEY_1:
+            impulse = glm::vec3(impulseMagnitude, 0.0f, 0.0f);
+            break;
+
+        case GLFW_KEY_2:
+            impulse = glm::vec3(-impulseMagnitude, 0.0f, 0.0f);
+            offset += _arrowScale * glm::vec3(1.0f, 0.0f, 0.0f);
+            direction = glm::vec3(-1.0f, 0.0f, 0.0f);
+            break;
+
+        case GLFW_KEY_3:
+            impulse   = glm::vec3(0.0f, -impulseMagnitude, 0.0f);
+            direction = glm::vec3(0.0f, -1.0f, 0.0f);
+            break;
+
+        case GLFW_KEY_4:
+            impulse   = glm::vec3(0.0f, impulseMagnitude, 0.0f);
+            direction = glm::vec3(0.0f, 1.0f, 0.0f);
+            break;
+        }
+
+        glm::vec3 rightEndPos(0.0f);
+        int       rightEndVertexCount = 0;
+        for (auto & vertex : _tetsystem._vertices) {
+            int i = vertex._id / ((_tetsystem.ny + 1) * (_tetsystem.nz + 1));
+            if (i == _tetsystem.nx) {
+                vertex._vel += impulse / vertex._mass;
+                rightEndPos += vertex._pos;
+                rightEndVertexCount++;
+            }
+        }
+
+        if (rightEndVertexCount > 0) {
+            rightEndPos /= rightEndVertexCount;
+        }
     }
 
     void CaseFEM::ResetSystem() {
         _tetsystem.InitializeSystem();
-        _camera.Eye    = glm::vec3(18.0f, -9.0f, 8.0f);
+        _camera.Eye    = glm::vec3(20.0f, -10.0f, 10.0f);
         _camera.Target = glm::vec3(4.0f, 2.0f, -2.0f);
         _camera.Up     = glm::vec3(0.0f, 0.0f, 1.0f);
         _camera.Fovy   = 45.0f;

@@ -37,7 +37,6 @@ namespace VCX::Labs::FEM {
             return glm::vec4(1.0f, 1.0f, 1.0f - ratio, 0.8f);
         }
 
-
         void InitializeSystem();
         void AdvanceTetrahedronSystem(float dt);
         int  _numperstep { 5 }; // Number of substeps for each time step
@@ -46,5 +45,6 @@ namespace VCX::Labs::FEM {
                 AdvanceTetrahedronSystem(dt / _numperstep);
             }
         }
+
     };
 }
