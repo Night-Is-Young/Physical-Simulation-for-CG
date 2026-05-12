@@ -6,8 +6,8 @@
 
 namespace VCX::Labs::FEM {
     struct TetrahedronSystem {
-        float Lx { 4.0f }, Ly { 4.0f }, Lz { 4.0f }; // Lengths of the system in x, y, z directions
-        int   nx { 16 }, ny { 16 }, nz { 16 };       // Number of subdivisions in x, y, z directions
+        float Lx { 8.0f }, Ly { 2.0f }, Lz { 2.0f }; // Lengths of the system in x, y, z directions
+        int   nx { 32 }, ny { 8 }, nz { 8 };       // Number of subdivisions in x, y, z directions
         glm::vec4 facecolor { 0.0f, 0.5f, 0.3f, 0.5f };
         glm::vec4 edgecolor { 1.0f, 1.0f, 1.0f, 1.0f };
 
@@ -15,6 +15,14 @@ namespace VCX::Labs::FEM {
         float _rho { 400.0f };              // Density of the material
         float _nu { 0.2f };                 // Poisson's ratio for the material
         float _gravity { -0.05f };           // Gravitational acceleration
+
+        float _lambda { (_youngs_modulus / _rho) *_nu / ((1 + _nu) * (1 - 2 * _nu)) }; // Lamé's first parameter
+        float _mu { (_youngs_modulus / _rho) / (2 * (1 + _nu)) };                              // Lamé's second parameter
+
+        bool _gravity_on { true }; // Flag to turn off gravity
+        bool _friction_on { true }; // Flag to turn off friction
+        float _friction_ratio { 0.98f }; // Velocity reduction ratio for friction
+        float _max_vel { 0.0f };    // Maximum velocity for clamping
 
         std::vector<Tetrahedron> _tetrahedra; // List of tetrahedra in the system
         std::vector<Vertex>      _vertices;   // List of vertices in the system

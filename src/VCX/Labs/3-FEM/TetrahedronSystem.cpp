@@ -172,6 +172,48 @@ namespace VCX::Labs::FEM {
     }
 
     void TetrahedronSystem::AdvanceTetrahedronSystem(float dt) {
-        int i = 1;
+        for (auto & vertex : _vertices) {
+            vertex._force = glm::vec3(0.0f);
+        }
+
+        for (auto & tet : _tetrahedra) {
+            glm::vec3 x0 = tet._vertices[0]->_pos;
+            glm::vec3 x1 = tet._vertices[1]->_pos;
+            glm::vec3 x2 = tet._vertices[2]->_pos;
+            glm::vec3 x3 = tet._vertices[3]->_pos;
+
+            glm::mat3 Dm;
+            Dm[0] = x1 - x0;
+            Dm[1] = x2 - x0;
+            Dm[2] = x3 - x0;
+            glm::mat3 F = Dm * tet._E_inv;
+            glm::mat3 G = 1.0f / 2.0f * (glm::transpose(F) * F - glm::mat3(1.0f));
+            float     tr = G[0][0] + G[1][1] + G[2][2];
+            glm::mat3 S  = 2 * _mu * G + _lambda * tr * glm::mat3(1.0f);
+            glm::mat3 P  = F * S;
+            glm::mat3 H  = -P * glm::transpose(tet._E_inv);
+
+            tet._vertices[0]->_force -= H[0] + H[1] + H[2];
+            tet._vertices[1]->_force += H[0];
+            tet._vertices[2]->_force += H[1];
+            tet._vertices[3]->_force += H[2];
+        }
+        float maxV { 0.0f };
+        for (auto & vertex : _vertices) {
+            if (vertex._id > (ny * (nz + 1) + nz)) {
+                vertex._vel += dt * vertex._force / vertex._mass;
+                if (_gravity_on) {
+                    vertex._vel += dt * glm::vec3(0.0f, 0.0f, _gravity);
+                }
+                if (_friction_on) {
+                    vertex._vel *= _friction_ratio;
+                }
+
+                maxV         = std::max(maxV, glm::length(vertex._vel));
+                vertex._color = ColorMap(vertex._vel);
+                vertex._pos += dt * vertex._vel;
+            }
+        }
+        _max_vel = maxV;
     }
 }
