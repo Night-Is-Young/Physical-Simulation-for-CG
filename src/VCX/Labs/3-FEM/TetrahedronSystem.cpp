@@ -1,33 +1,73 @@
-#pragma once
-
-#include "Labs/3-FEM/Tetrahedron.h"
-#include <glm/glm.hpp>
-#include <vector>
+#include "Labs/3-FEM/TetrahedronSystem.h"
 
 namespace VCX::Labs::FEM {
-    struct TetrahedronSystem {
-        float Lx { 4.0f }, Ly { 4.0f }, Lz { 4.0f }; // Lengths of the system in x, y, z directions
-        int   nx { 16 }, ny { 16 }, nz { 16 };       // Number of subdivisions in x, y, z directions
-        glm::vec4 facecolor { 0.0f, 0.5f, 0.3f, 0.5f };
-        glm::vec4 edgecolor { 1.0f, 1.0f, 1.0f, 1.0f };
 
-        float _youngs_modulus { 20000.0f }; // Young's modulus for the material
-        float _rho { 400.0f };              // Density of the material
-        float _nu { 0.2f };                 // Poisson's ratio for the material
-        float _gravity { -0.05f };           // Gravitational acceleration
+    
 
-        std::vector<Tetrahedron> _tetrahedra; // List of tetrahedra in the system
-        std::vector<Vertex>      _vertices;   // List of vertices in the system
-        std::vector<std::pair<int, int>> _edges; // List of edges in the system
-        std::vector<std::vector<int>>    _surfaceTriangles; // List of triangles in the system on the surface
+    void TetrahedronSystem::InitializeSystem() {
+        const int verticesCnt = (nx + 1) * (ny + 1) * (nz + 1);
+        const int tetrahedraCnt = nx * ny * nz * 6;
 
-        void InitializeSystem();
-        void AdvanceTetrahedronSystem(const float dt);
-        int  _numperstep { 5 }; // Number of substeps for each time step
-        void SimulateTimeStep(const float dt) {
-            for (int i = 0; i < _numperstep; ++i) {
-                AdvanceTetrahedronSystem(dt / _numperstep);
+        _vertices.clear();
+        _vertices.resize(verticesCnt);
+        _tetrahedra.clear();
+        _tetrahedra.resize(tetrahedraCnt);
+        _edges.clear();
+        std::vector<std::vector<bool>> edgeVisited(verticesCnt, std::vector<bool>(verticesCnt, false));
+        _surfaceTriangles.clear();
+
+        float hx = Lx / nx, hy = Ly / ny, hz = Lz / nz;
+
+        for (int i = 0; i <= nx; ++i) {
+            for (int j = 0; j <= ny; ++j) {
+                for (int k = 0; k <= nz; ++k) {
+
+                    int vertexId        = GetVertexIndex(i, j, k);
+                    _vertices[vertexId] = Vertex(vertexId, glm::vec3(i * hx, j * hy, k * hz));
+
+                    int type = 0;
+                    if (i == 0 || i == nx) type++;
+                    if (j == 0 || j == ny) type++;
+                    if (k == 0 || k == nz) type++;
+                    _vertices[vertexId]._type = type;
+
+                    _vertices[vertexId]._color = ColorMap(_vertices[vertexId]._vel);
+                }
             }
         }
-    };
+
+        std::vector<int> tetrahedronVertexIndices = {
+            0, 1, 3, 7, 
+            0, 2, 3, 7, 
+            0, 1, 5, 7, 
+            0, 4, 5, 7, 
+            0, 2, 6, 7, 
+            0, 4, 6, 7
+        };
+
+        int tetrahedronIndex = 0;
+        for (int i = 0; i < nx; i++) {
+            for (int j = 0; j < ny; j++) {
+                for (int k = 0; k < nz; k++) {
+
+                    std::vector<Vertex *> vptr(8);
+                    for (int di = 0; di <= 1; di++) {
+                        for (int dj = 0; dj <= 1; dj++) {
+                            for (int dk = 0; dk <= 1; dk++) {
+                                vptr[di * 4 + dj * 2 + dk] = &_vertices[GetVertexIndex(i + di, j + dj, k + dk)];
+                            }
+                        }
+                    }
+
+                    for (int t = 0; t < 6; t++) {
+                        _tetrahedra[tetrahedronIndex] = Tetrahedron(tetrahedronIndex);
+                        for (int v = 0; v < 4; v++) {
+                            _tetrahedra[tetrahedronIndex]._vertices[v] = vptr[t * 4 + v];
+                        }
+                        tetrahedronIndex++;
+                    }
+                }
+            }
+        }
+    }
 }
