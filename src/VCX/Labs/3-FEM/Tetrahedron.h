@@ -13,12 +13,12 @@ namespace VCX::Labs::FEM {
         Tetrahedron():
             _id(0),
             _E_inv(glm::mat3(1.0f)) {
-            _vertices.reserve(4); // A tetrahedron has 4 vertices
+            _vertices.resize(4); // A tetrahedron has 4 vertices
         }
         Tetrahedron(int id):
             _id(id),
             _E_inv(glm::mat3(1.0f)) {
-            _vertices.reserve(4); // A tetrahedron has 4 vertices
+            _vertices.resize(4); // A tetrahedron has 4 vertices
         }
     };
 }

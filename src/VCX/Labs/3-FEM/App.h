@@ -3,21 +3,19 @@
 #include <vector>
 
 #include "Engine/app.h"
-#include "Labs/2-FluidSimulation/CaseFluid.h"
-#include "Labs/2-FluidSimulation/CaseRendering.h"
+#include "Labs/3-FEM/CaseFEM.h"
 #include "Labs/Common/UI.h"
 
-namespace VCX::Labs::FluidSimulation {
+namespace VCX::Labs::FEM {
     class App : public Engine::IApp {
     private:
         Common::UI _ui;
 
-        CaseFluid _CaseFluid;
-        CaseRendering _CaseRendering;
+        CaseFEM _CaseFEM;
 
         std::size_t _caseId = 0;
 
-        std::vector<std::reference_wrapper<Common::ICase>> _cases = { _CaseFluid, _CaseRendering };
+        std::vector<std::reference_wrapper<Common::ICase>> _cases = { _CaseFEM };
 
     public:
         App();

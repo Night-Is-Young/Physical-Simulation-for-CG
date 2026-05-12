@@ -21,10 +21,19 @@ namespace VCX::Labs::FEM {
         std::vector<std::pair<int, int>> _edges; // List of edges in the system
         std::vector<std::vector<int>>    _surfaceTriangles; // List of triangles in the system on the surface
 
+        int GetVertexIndex(int i, int j, int k) const {
+            return i * (ny + 1) * (nz + 1) + j * (nz + 1) + k;
+        }
+        glm::vec4 ColorMap(glm::vec3 v) {
+            float ratio = std::min(glm::length(v) / (0.2f * std::sqrt(_youngs_modulus / _rho)), 1.0f);
+            return glm::vec4(1.0f, 1.0f, 1.0f - ratio, 0.8f);
+        }
+
+
         void InitializeSystem();
-        void AdvanceTetrahedronSystem(const float dt);
+        void AdvanceTetrahedronSystem(float dt);
         int  _numperstep { 5 }; // Number of substeps for each time step
-        void SimulateTimeStep(const float dt) {
+        void SimulateTimeStep(float dt) {
             for (int i = 0; i < _numperstep; ++i) {
                 AdvanceTetrahedronSystem(dt / _numperstep);
             }

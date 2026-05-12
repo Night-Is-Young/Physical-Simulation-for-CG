@@ -21,8 +21,8 @@ namespace VCX::Labs::FEM {
         virtual Common::CaseRenderResult OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) override;
         virtual void                     OnProcessInput(ImVec2 const & pos) override;
 
-        void ProcessKeyInput(int key, int action);
-        void UpdateArrow(const glm::vec3 & startPos, const glm::vec3 & direction, char type);
+        //void ProcessKeyInput(int key, int action);
+        //void UpdateArrow(const glm::vec3 & startPos, const glm::vec3 & direction, char type);
 
     private:
         Engine::GL::UniqueProgram           _program;

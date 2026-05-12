@@ -1,11 +1,11 @@
+#include "Labs/3-FEM/App.h"
 #include "Assets/bundled.h"
-#include "Labs/2-FluidSimulation/App.h"
 
-namespace VCX::Labs::FluidSimulation {
+namespace VCX::Labs::FEM {
 
     App::App():
         _ui(Labs::Common::UIOptions {}),
-        _CaseFluid({ Assets::ExampleScene::Fluid }) {
+        _CaseFEM() {
     }
 
     void App::OnFrame() {
