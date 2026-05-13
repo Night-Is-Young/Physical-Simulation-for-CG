@@ -22,7 +22,7 @@ namespace VCX::Labs::FEM {
 
         bool _gravity_on { true }; // Flag to turn off gravity
         bool _friction_on { true }; // Flag to turn off friction
-        float _friction_ratio { 0.9f }; // Velocity reduction ratio for friction
+        float _friction_ratio { 0.999f }; // Velocity reduction ratio for friction
         float _max_vel { 0.0f };    // Maximum velocity for clamping
 
         std::vector<Triangle> _triangles; // List of triangles in the system

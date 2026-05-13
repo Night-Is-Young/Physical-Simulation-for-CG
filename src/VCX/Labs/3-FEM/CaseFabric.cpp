@@ -59,7 +59,6 @@ namespace VCX::Labs::FEM {
             _trisystem.SimulateTimeStep(Engine::GetDeltaTime());
         }
 
-        // rendering walls
         _frame.Resize(desiredSize);
         _cameraManager.Update(_camera);
         _program.GetUniforms().SetByName("u_Projection", _camera.GetProjectionMatrix((float(desiredSize.first) / desiredSize.second)));
@@ -172,7 +171,7 @@ namespace VCX::Labs::FEM {
         }
 
         for (auto & vertex : _trisystem._vertices) {
-            if (vertex._id < _trisystem.ny * (_trisystem.nx + 1) / 4) {
+            if (vertex._id <= _trisystem.ny) {
                 vertex._vel += impulse / vertex._mass;
             }
         }
@@ -180,8 +179,8 @@ namespace VCX::Labs::FEM {
 
     void CaseFabric::ResetSystem() {
         _trisystem.InitializeSystem();
-        _camera.Eye    = glm::vec3(20.0f, -10.0f, 10.0f);
-        _camera.Target = glm::vec3(4.0f, 2.0f, -2.0f);
+        _camera.Eye    = glm::vec3(-5.0f, 1.0f, -1.0f);
+        _camera.Target = glm::vec3(1.0f, 1.0f, -1.0f);
         _camera.Up     = glm::vec3(0.0f, 0.0f, 1.0f);
         _camera.Fovy   = 45.0f;
         _cameraManager.Save(_camera);

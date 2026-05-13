@@ -29,81 +29,44 @@ namespace VCX::Labs::FEM {
                     if (k == 0 || k == nz) type++;
                     _vertices[vertexId]._type = type;
 
-                    _vertices[vertexId]._color = ColorMap(_vertices[vertexId]._vel);
+                    _vertices[vertexId]._color = glm::vec4(1.f);
                 }
             }
         }
 
-        // std::vector<int> tetrahedronVertexIndices = {
-        //     0, 1, 3, 7,
-        //     0, 2, 3, 7,
-        //     0, 1, 5, 7,
-        //     0, 4, 5, 7,
-        //     0, 2, 6, 7,
-        //     0, 4, 6, 7
-        // };
-
-        // int tetrahedronIndex = 0;
-        // for (int i = 0; i < nx; i++) {
-        //     for (int j = 0; j < ny; j++) {
-        //         for (int k = 0; k < nz; k++) {
-
-        //            std::vector<Vertex *> vptr;
-        //            vptr.resize(8);
-        //            for (int di = 0; di <= 1; di++) {
-        //                for (int dj = 0; dj <= 1; dj++) {
-        //                    for (int dk = 0; dk <= 1; dk++) {
-        //                        vptr[di * 4 + dj * 2 + dk] = &_vertices[GetVertexIndex(i + di, j + dj, k + dk)];
-        //                    }
-        //                }
-        //            }
-
-        //            for (int t = 0; t < 6; t++) {
-        //                _tetrahedra[tetrahedronIndex] = Tetrahedron(tetrahedronIndex);
-        //                for (int v = 0; v < 4; v++) {
-        //                    _tetrahedra[tetrahedronIndex]._vertices[v] = vptr[t * 4 + v];
-        //                }
-        //                tetrahedronIndex++;
-        //            }
-        //        }
-        //    }
-        //}
+         std::vector<int> tetVId = {
+             0, 1, 3, 7,
+             0, 2, 3, 7,
+             0, 1, 5, 7,
+             0, 4, 5, 7,
+             0, 2, 6, 7,
+             0, 4, 6, 7
+         };
         int TetId = 0;
         for (int i = 0; i < nx; i++) {
             for (int j = 0; j < ny; j++) {
                 for (int k = 0; k < nz; k++) {
-                    Vertex * v000 = &_vertices[GetVertexIndex(i, j, k)];
-                    Vertex * v001 = &_vertices[GetVertexIndex(i, j, k + 1)];
-                    Vertex * v010 = &_vertices[GetVertexIndex(i, j + 1, k)];
-                    Vertex * v011 = &_vertices[GetVertexIndex(i, j + 1, k + 1)];
-                    Vertex * v100 = &_vertices[GetVertexIndex(i + 1, j, k)];
-                    Vertex * v101 = &_vertices[GetVertexIndex(i + 1, j, k + 1)];
-                    Vertex * v110 = &_vertices[GetVertexIndex(i + 1, j + 1, k)];
-                    Vertex * v111 = &_vertices[GetVertexIndex(i + 1, j + 1, k + 1)];
+                    std::vector<Vertex *> vptr {
+                        &_vertices[GetVertexIndex(i, j, k)],
+                        &_vertices[GetVertexIndex(i, j, k + 1)],
+                        &_vertices[GetVertexIndex(i, j + 1, k)],
+                        &_vertices[GetVertexIndex(i, j + 1, k + 1)],
+                        &_vertices[GetVertexIndex(i + 1, j, k)],
+                        &_vertices[GetVertexIndex(i + 1, j, k + 1)],
+                        &_vertices[GetVertexIndex(i + 1, j + 1, k)],
+                        &_vertices[GetVertexIndex(i + 1, j + 1, k + 1)]
+                    };
 
-                    _tetrahedra[TetId]           = Tetrahedron(TetId);
-                    _tetrahedra[TetId]._vertices = { v000, v001, v011, v111 }; // Tet1
-                    TetId++;
-
-                    _tetrahedra[TetId]           = Tetrahedron(TetId);
-                    _tetrahedra[TetId]._vertices = { v000, v010, v011, v111 }; // Tet2
-                    TetId++;
-
-                    _tetrahedra[TetId]           = Tetrahedron(TetId);
-                    _tetrahedra[TetId]._vertices = { v000, v001, v101, v111 }; // Tet3
-                    TetId++;
-
-                    _tetrahedra[TetId]           = Tetrahedron(TetId);
-                    _tetrahedra[TetId]._vertices = { v000, v100, v101, v111 }; // Tet4
-                    TetId++;
-
-                    _tetrahedra[TetId]           = Tetrahedron(TetId);
-                    _tetrahedra[TetId]._vertices = { v000, v010, v110, v111 }; // Tet5
-                    TetId++;
-
-                    _tetrahedra[TetId]           = Tetrahedron(TetId);
-                    _tetrahedra[TetId]._vertices = { v000, v100, v110, v111 }; // Tet6
-                    TetId++;
+                    for (int t = 0; t < 6; t++) {
+                        _tetrahedra[TetId] = Tetrahedron(TetId);
+                        _tetrahedra[TetId]._vertices = {
+                            vptr[tetVId[t * 4 + 0]],
+                            vptr[tetVId[t * 4 + 1]],
+                            vptr[tetVId[t * 4 + 2]],
+                            vptr[tetVId[t * 4 + 3]]
+                        };
+                        TetId++;
+                    }
                 }
             }
         }
@@ -203,12 +166,8 @@ namespace VCX::Labs::FEM {
                 if (_friction_on) {
                     vertex._vel *= _friction_ratio;
                 }
-
-                maxV          = std::max(maxV, glm::length(vertex._vel));
-                vertex._color = ColorMap(vertex._vel);
                 vertex._pos += dt * vertex._vel;
             }
         }
-        _max_vel = maxV;
     }
 } // namespace VCX::Labs::FEM

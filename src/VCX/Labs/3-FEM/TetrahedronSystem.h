@@ -22,7 +22,6 @@ namespace VCX::Labs::FEM {
         bool _gravity_on { true }; // Flag to turn off gravity
         bool _friction_on { true }; // Flag to turn off friction
         float _friction_ratio { 0.98f }; // Velocity reduction ratio for friction
-        float _max_vel { 0.0f };    // Maximum velocity for clamping
 
         std::vector<Tetrahedron> _tetrahedra; // List of tetrahedra in the system
         std::vector<Vertex>      _vertices;   // List of vertices in the system
@@ -31,10 +30,6 @@ namespace VCX::Labs::FEM {
 
         int GetVertexIndex(int i, int j, int k) const {
             return i * (ny + 1) * (nz + 1) + j * (nz + 1) + k;
-        }
-        glm::vec4 ColorMap(glm::vec3 v) {
-            float ratio = std::min(glm::length(v) / (0.2f * std::sqrt(_youngs_modulus / _rho)), 1.0f);
-            return glm::vec4(1.0f, 1.0f, 1.0f - ratio, 0.8f);
         }
 
         void InitializeSystem();

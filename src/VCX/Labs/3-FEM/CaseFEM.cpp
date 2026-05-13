@@ -46,7 +46,7 @@ namespace VCX::Labs::FEM {
             if (ImGui::Button(_tetsystem._friction_on ? "Friction On" : "Friction Off")) _tetsystem._friction_on = ! _tetsystem._friction_on;
             ImGui::SliderFloat("Poisson's Ratio: ", &_tetsystem._nu, -1.0f, 0.5f, "%.2f");
             ImGui::SliderFloat("Friction Coefficient:", &_tetsystem._friction_ratio, 0.95f, 1.0f, "%.4f");
-            ImGui::SliderFloat("Friction Coefficient:", &impulseMagnitude, 0.0f, 5.0f, "%.2f");
+            ImGui::SliderFloat("Impulse Magnitude:", &impulseMagnitude, 0.0f, 5.0f, "%.2f");
 
         }
         ImGui::Spacing();
@@ -157,7 +157,6 @@ namespace VCX::Labs::FEM {
 
         glm::vec3 impulse(0.0f);
         glm::vec3 direction(1.0f, 0.0f, 0.0f);
-        char      type { 'x' };
         switch (key) {
         case GLFW_KEY_1:
             impulse = glm::vec3(impulseMagnitude, 0.0f, 0.0f);

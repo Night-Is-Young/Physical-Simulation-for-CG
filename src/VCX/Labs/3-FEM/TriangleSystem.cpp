@@ -121,9 +121,6 @@ namespace VCX::Labs::FEM {
                 if (_gravity_on) {
                     vertex._vel += dt * glm::vec3(0.0f, 0.0f, _gravity);
                 }
-                if (_friction_on) {
-                    vertex._vel *= _friction_ratio;
-                }
                 vertex._vel   = std::min(10.0f, glm::length(vertex._vel)) * glm::normalize(vertex._vel);
                 maxV          = std::max(maxV, glm::length(vertex._vel));
                 vertex._color = ColorMap(vertex._vel);
@@ -141,6 +138,7 @@ namespace VCX::Labs::FEM {
                 vertex._vel *= _friction_ratio;
             }
         }
+        
     }
 
 } // namespace VCX::Labs::FEM

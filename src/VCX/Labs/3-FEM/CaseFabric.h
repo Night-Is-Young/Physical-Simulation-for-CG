@@ -15,7 +15,7 @@ namespace VCX::Labs::FEM {
     public:
         CaseFabric();
 
-        virtual std::string_view const GetName() override { return "FEM Simulation"; }
+        virtual std::string_view const GetName() override { return "Fabric Simulation"; }
 
         virtual void                     OnSetupPropsUI() override;
         virtual Common::CaseRenderResult OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) override;
