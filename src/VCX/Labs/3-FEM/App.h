@@ -4,6 +4,7 @@
 
 #include "Engine/app.h"
 #include "Labs/3-FEM/CaseFEM.h"
+#include "Labs/3-FEM/CaseFabric.h"
 #include "Labs/Common/UI.h"
 
 namespace VCX::Labs::FEM {
@@ -12,10 +13,11 @@ namespace VCX::Labs::FEM {
         Common::UI _ui;
 
         CaseFEM _CaseFEM;
+        CaseFabric _CaseFabric;
 
         std::size_t _caseId = 0;
 
-        std::vector<std::reference_wrapper<Common::ICase>> _cases = { _CaseFEM };
+        std::vector<std::reference_wrapper<Common::ICase>> _cases = { _CaseFEM, _CaseFabric };
 
     public:
         App();

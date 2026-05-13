@@ -156,7 +156,6 @@ namespace VCX::Labs::FEM {
         if (action != GLFW_PRESS) return;
 
         glm::vec3 impulse(0.0f);
-        glm::vec3 offset(0.0f);
         glm::vec3 direction(1.0f, 0.0f, 0.0f);
         char      type { 'x' };
         switch (key) {
@@ -166,7 +165,6 @@ namespace VCX::Labs::FEM {
 
         case GLFW_KEY_2:
             impulse = glm::vec3(-impulseMagnitude, 0.0f, 0.0f);
-            offset += _arrowScale * glm::vec3(1.0f, 0.0f, 0.0f);
             direction = glm::vec3(-1.0f, 0.0f, 0.0f);
             break;
 

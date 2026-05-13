@@ -21,7 +21,7 @@ namespace VCX::Labs::FEM {
 
         bool _gravity_on { true }; // Flag to turn off gravity
         bool _friction_on { true }; // Flag to turn off friction
-        float _friction_ratio { 0.98f }; // Velocity reduction ratio for friction
+        float _friction_ratio { 0.9f }; // Velocity reduction ratio for friction
         float _max_vel { 0.0f };    // Maximum velocity for clamping
 
         std::vector<Triangle> _triangles; // List of triangles in the system
@@ -29,7 +29,7 @@ namespace VCX::Labs::FEM {
         std::vector<std::pair<int, int>> _edges; // List of edges in the system
         std::vector<std::vector<int>>    _surfaceTriangles; // List of triangles in the system on the surface
 
-        int GetVertexIndex(int i, int j, int k) const {
+        int GetVertexIndex(int i, int j) const {
             return i * (ny + 1) + j;
         }
         glm::vec4 ColorMap(glm::vec3 v) {

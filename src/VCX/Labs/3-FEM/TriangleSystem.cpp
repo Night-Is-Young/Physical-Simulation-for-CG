@@ -22,7 +22,7 @@ namespace VCX::Labs::FEM {
                 int vertexId        = GetVertexIndex(i, j);
                 _vertices[vertexId] = Vertex(vertexId, glm::vec3(i * hx, j * hy, 0.0f));
 
-                int type = 1;
+                int type = 0;
                 if (i == 0 || i == nx) type++;
                 if (j == 0 || j == ny) type++;
                 _vertices[vertexId]._type = type;
@@ -46,7 +46,7 @@ namespace VCX::Labs::FEM {
 
                 _triangles[triangleIndex]           = Triangle(triangleIndex);
                 _triangles[triangleIndex]._vertices = { v00, v10, v11 }; // Triangle 2
-                _triangles[triangleIndex]._uv       = { glm::vec2(i * hx, j * hy), glm::vec2((i + 1) * hx, (j + 1) * hy), glm::vec2((i + 1) * hx, (j + 1) * hy) };
+                _triangles[triangleIndex]._uv       = { glm::vec2(i * hx, j * hy), glm::vec2((i + 1) * hx, j * hy), glm::vec2((i + 1) * hx, (j + 1) * hy) };
                 triangleIndex++;
             }
         }
@@ -62,7 +62,7 @@ namespace VCX::Labs::FEM {
 
         for (auto & tri : _triangles) {
             for (auto vertex : tri._vertices) {
-                vertex->_mass += 1.0f / 4.0f;
+                vertex->_mass += 1.0f / 3.0f;
             }
         }
 
@@ -108,7 +108,7 @@ namespace VCX::Labs::FEM {
             float     tr = G[0][0] + G[1][1];
             glm::mat2 S  = 2.0f * _mu * G + _lambda * tr * glm::mat2(1.0f);
             glm::mat2x3 P  = F * S;
-            glm::mat2x3 H  = -P * glm::transpose(tri._Dm_inv);
+            glm::mat2x3 H  = - P * glm::transpose(tri._Dm_inv);
 
             tri._vertices[0]->_force -= H[0] + H[1];
             tri._vertices[1]->_force += H[0];
@@ -117,14 +117,16 @@ namespace VCX::Labs::FEM {
         float maxV { 0.0f };
         for (auto & vertex : _vertices) {
             if (vertex._id < nx * (ny + 1)) {
+                if (_friction_on) {
+                    vertex._force *= _friction_ratio;
+                }
                 vertex._vel += dt * vertex._force / vertex._mass;
                 if (_gravity_on) {
                     vertex._vel += dt * glm::vec3(0.0f, 0.0f, _gravity);
                 }
                 if (_friction_on) {
-                    vertex._vel *= _friction_ratio;
+                    vertex._vel *= .99f;
                 }
-
                 maxV          = std::max(maxV, glm::length(vertex._vel));
                 vertex._color = ColorMap(vertex._vel);
                 vertex._pos += dt * vertex._vel;

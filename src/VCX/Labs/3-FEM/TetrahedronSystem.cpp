@@ -4,7 +4,7 @@
 namespace VCX::Labs::FEM {
 
     void TetrahedronSystem::InitializeSystem() {
-        const int verticesCnt = (nx + 1) * (ny + 1) * (nz + 1);
+        const int verticesCnt   = (nx + 1) * (ny + 1) * (nz + 1);
         const int tetrahedraCnt = nx * ny * nz * 6;
 
         _vertices.clear();
@@ -20,7 +20,6 @@ namespace VCX::Labs::FEM {
         for (int i = 0; i <= nx; ++i) {
             for (int j = 0; j <= ny; ++j) {
                 for (int k = 0; k <= nz; ++k) {
-
                     int vertexId        = GetVertexIndex(i, j, k);
                     _vertices[vertexId] = Vertex(vertexId, glm::vec3(i * hx, j * hy, k * hz));
 
@@ -35,19 +34,19 @@ namespace VCX::Labs::FEM {
             }
         }
 
-        //std::vector<int> tetrahedronVertexIndices = {
-        //    0, 1, 3, 7, 
-        //    0, 2, 3, 7, 
-        //    0, 1, 5, 7, 
-        //    0, 4, 5, 7, 
-        //    0, 2, 6, 7, 
-        //    0, 4, 6, 7
-        //};
+        // std::vector<int> tetrahedronVertexIndices = {
+        //     0, 1, 3, 7,
+        //     0, 2, 3, 7,
+        //     0, 1, 5, 7,
+        //     0, 4, 5, 7,
+        //     0, 2, 6, 7,
+        //     0, 4, 6, 7
+        // };
 
-        //int tetrahedronIndex = 0;
-        //for (int i = 0; i < nx; i++) {
-        //    for (int j = 0; j < ny; j++) {
-        //        for (int k = 0; k < nz; k++) {
+        // int tetrahedronIndex = 0;
+        // for (int i = 0; i < nx; i++) {
+        //     for (int j = 0; j < ny; j++) {
+        //         for (int k = 0; k < nz; k++) {
 
         //            std::vector<Vertex *> vptr;
         //            vptr.resize(8);
@@ -82,33 +81,32 @@ namespace VCX::Labs::FEM {
                     Vertex * v110 = &_vertices[GetVertexIndex(i + 1, j + 1, k)];
                     Vertex * v111 = &_vertices[GetVertexIndex(i + 1, j + 1, k + 1)];
 
-                    _tetrahedra[TetId]          = Tetrahedron(TetId);
+                    _tetrahedra[TetId]           = Tetrahedron(TetId);
                     _tetrahedra[TetId]._vertices = { v000, v001, v011, v111 }; // Tet1
                     TetId++;
 
-                    _tetrahedra[TetId]          = Tetrahedron(TetId);
+                    _tetrahedra[TetId]           = Tetrahedron(TetId);
                     _tetrahedra[TetId]._vertices = { v000, v010, v011, v111 }; // Tet2
                     TetId++;
 
-                    _tetrahedra[TetId]          = Tetrahedron(TetId);
+                    _tetrahedra[TetId]           = Tetrahedron(TetId);
                     _tetrahedra[TetId]._vertices = { v000, v001, v101, v111 }; // Tet3
                     TetId++;
 
-                    _tetrahedra[TetId]          = Tetrahedron(TetId);
+                    _tetrahedra[TetId]           = Tetrahedron(TetId);
                     _tetrahedra[TetId]._vertices = { v000, v100, v101, v111 }; // Tet4
                     TetId++;
 
-                    _tetrahedra[TetId]          = Tetrahedron(TetId);
+                    _tetrahedra[TetId]           = Tetrahedron(TetId);
                     _tetrahedra[TetId]._vertices = { v000, v010, v110, v111 }; // Tet5
                     TetId++;
 
-                    _tetrahedra[TetId]          = Tetrahedron(TetId);
+                    _tetrahedra[TetId]           = Tetrahedron(TetId);
                     _tetrahedra[TetId]._vertices = { v000, v100, v110, v111 }; // Tet6
                     TetId++;
                 }
             }
         }
-
 
         for (auto & tet : _tetrahedra) {
             glm::mat3 E;
@@ -166,7 +164,6 @@ namespace VCX::Labs::FEM {
                 _surfaceTriangles.push_back({ GetVertexIndex(i, j, nz), GetVertexIndex(i + 1, j, nz), GetVertexIndex(i + 1, j + 1, nz) });
             }
         }
-
     }
 
     void TetrahedronSystem::AdvanceTetrahedronSystem(float dt) {
@@ -181,11 +178,11 @@ namespace VCX::Labs::FEM {
             glm::vec3 x3 = tet._vertices[3]->_pos;
 
             glm::mat3 Dm;
-            Dm[0] = x1 - x0;
-            Dm[1] = x2 - x0;
-            Dm[2] = x3 - x0;
-            glm::mat3 F = Dm * tet._E_inv;
-            glm::mat3 G = 1.0f / 2.0f * (glm::transpose(F) * F - glm::mat3(1.0f));
+            Dm[0]        = x1 - x0;
+            Dm[1]        = x2 - x0;
+            Dm[2]        = x3 - x0;
+            glm::mat3 F  = Dm * tet._E_inv;
+            glm::mat3 G  = 1.0f / 2.0f * (glm::transpose(F) * F - glm::mat3(1.0f));
             float     tr = G[0][0] + G[1][1] + G[2][2];
             glm::mat3 S  = 2 * _mu * G + _lambda * tr * glm::mat3(1.0f);
             glm::mat3 P  = F * S;
@@ -207,11 +204,11 @@ namespace VCX::Labs::FEM {
                     vertex._vel *= _friction_ratio;
                 }
 
-                maxV         = std::max(maxV, glm::length(vertex._vel));
+                maxV          = std::max(maxV, glm::length(vertex._vel));
                 vertex._color = ColorMap(vertex._vel);
                 vertex._pos += dt * vertex._vel;
             }
         }
         _max_vel = maxV;
     }
-}
+} // namespace VCX::Labs::FEM

@@ -5,7 +5,8 @@ namespace VCX::Labs::FEM {
 
     App::App():
         _ui(Labs::Common::UIOptions {}),
-        _CaseFEM() {
+        _CaseFEM(),
+        _CaseFabric() {
     }
 
     void App::OnFrame() {

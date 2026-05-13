@@ -39,7 +39,7 @@ namespace VCX::Labs::FEM {
 
         void InitializeSystem();
         void AdvanceTetrahedronSystem(float dt);
-        int  _numperstep { 5 }; // Number of substeps for each time step
+        int  _numperstep { 20 }; // Number of substeps for each time step
         void SimulateTimeStep(float dt) {
             for (int i = 0; i < _numperstep; ++i) {
                 AdvanceTetrahedronSystem(dt / _numperstep);
