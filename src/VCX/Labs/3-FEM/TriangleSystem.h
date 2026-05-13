@@ -15,6 +15,7 @@ namespace VCX::Labs::FEM {
         float _rho { 0.5f };              // Density of the material
         float _nu { 0.3f };                 // Poisson's ratio for the material
         float _gravity { -9.8f };           // Gravitational acceleration
+        float _damping { 0.9f };           // Damping factor for velocity
 
         float _lambda { (_youngs_modulus / _rho) *_nu / ((1 + _nu) * (1 - 2 * _nu)) }; // Lamé's first parameter
         float _mu { (_youngs_modulus / _rho) / (2 * (1 + _nu)) };                              // Lamé's second parameter
@@ -38,13 +39,8 @@ namespace VCX::Labs::FEM {
         }
 
         void InitializeSystem();
-        void AdvanceTetrahedronSystem(float dt);
-        int  _numperstep { 5 }; // Number of substeps for each time step
-        void SimulateTimeStep(float dt) {
-            for (int i = 0; i < _numperstep; ++i) {
-                AdvanceTetrahedronSystem(dt / _numperstep);
-            }
-        }
-
+        void AdvanceTriangleSystem(float dt);
+        int  _numperstep { 20 }; // Number of substeps for each time step
+        void SimulateTimeStep(float dt);
     };
 }

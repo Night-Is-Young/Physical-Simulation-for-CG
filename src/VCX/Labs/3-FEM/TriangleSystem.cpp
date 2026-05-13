@@ -88,7 +88,7 @@ namespace VCX::Labs::FEM {
         }
     }
 
-    void TriangleSystem::AdvanceTetrahedronSystem(float dt) {
+    void TriangleSystem::AdvanceTriangleSystem(float dt) {
         for (auto & vertex : _vertices) {
             vertex._force = glm::vec3(0.0f);
         }
@@ -117,16 +117,14 @@ namespace VCX::Labs::FEM {
         float maxV { 0.0f };
         for (auto & vertex : _vertices) {
             if (vertex._id < nx * (ny + 1)) {
-                if (_friction_on) {
-                    vertex._force *= _friction_ratio;
-                }
-                vertex._vel += dt * vertex._force / vertex._mass;
+                vertex._vel += dt * (vertex._force - _damping * vertex._vel) / vertex._mass;
                 if (_gravity_on) {
                     vertex._vel += dt * glm::vec3(0.0f, 0.0f, _gravity);
                 }
                 if (_friction_on) {
-                    vertex._vel *= .99f;
+                    vertex._vel *= _friction_ratio;
                 }
+                vertex._vel   = std::min(10.0f, glm::length(vertex._vel)) * glm::normalize(vertex._vel);
                 maxV          = std::max(maxV, glm::length(vertex._vel));
                 vertex._color = ColorMap(vertex._vel);
                 vertex._pos += dt * vertex._vel;
@@ -134,4 +132,15 @@ namespace VCX::Labs::FEM {
         }
         _max_vel = maxV;
     }
+    void TriangleSystem::SimulateTimeStep(float dt) {
+        for (int i = 0; i < _numperstep; ++i) {
+            AdvanceTriangleSystem(dt / _numperstep);
+        }
+        if (_friction_on) {
+            for (auto & vertex : _vertices) {
+                vertex._vel *= _friction_ratio;
+            }
+        }
+    }
+
 } // namespace VCX::Labs::FEM

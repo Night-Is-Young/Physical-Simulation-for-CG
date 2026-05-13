@@ -40,7 +40,8 @@ namespace VCX::Labs::FEM {
             ImGui::SameLine();
             if (ImGui::Button(_trisystem._friction_on ? "Friction On" : "Friction Off")) _trisystem._friction_on = ! _trisystem._friction_on;
             ImGui::SliderFloat("Poisson's Ratio: ", &_trisystem._nu, -1.0f, 0.5f, "%.2f");
-            ImGui::SliderFloat("Friction Coefficient:", &_trisystem._friction_ratio, 0.0f, 1.0f, "%.3f");
+            ImGui::SliderFloat("Friction Coefficient:", &_trisystem._friction_ratio, 0.99f, 1.0f, "%.4f");
+            ImGui::SliderFloat("Damping Factor:", &_trisystem._damping, 0.0f, 1.0f, "%.2f");
             ImGui::SliderFloat("Impulse Magnitude:", &impulseMagnitude, 0.0f, 5.0f, "%.2f");
 
         }
@@ -171,7 +172,7 @@ namespace VCX::Labs::FEM {
         }
 
         for (auto & vertex : _trisystem._vertices) {
-            if (vertex._id <= _trisystem.ny) {
+            if (vertex._id < _trisystem.ny * (_trisystem.nx + 1) / 4) {
                 vertex._vel += impulse / vertex._mass;
             }
         }
