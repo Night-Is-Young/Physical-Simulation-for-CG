@@ -40,7 +40,7 @@ namespace VCX::Labs::FEM {
 
         void InitializeSystem();
         void AdvanceTriangleSystem(float dt);
-        int  _numperstep { 20 }; // Number of substeps for each time step
+        int  _numperstep { 100 }; // Number of substeps for each time step
         void SimulateTimeStep(float dt);
     };
 }
